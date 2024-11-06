@@ -3,13 +3,7 @@ import logging
 from aiogram import Bot, Dispatcher
 from aiogram.fsm.storage.memory import MemoryStorage
 from app.database.db import create_db_and_tables  # Функция для создания базы и таблиц
-from app.config import load_config  # Конфигурация
-from dotenv import load_dotenv
-import os
-
-# Загружаем переменные окружения из .env
-load_dotenv()
-TOKEN = os.getenv("BOT_TOKEN")
+from config import load_config  # Конфигурация
 
 # Настройка логирования
 logging.basicConfig(level=logging.INFO)
@@ -17,8 +11,8 @@ logging.basicConfig(level=logging.INFO)
 
 # Инициализация бота и диспетчера
 async def main():
-    config = load_config()  # Загрузка конфигураций
-    bot = Bot(token=TOKEN, parse_mode="HTML")
+    config = load_config()  # Загрузка конфигурации
+    bot = Bot(token=config.BOT_TOKEN, parse_mode="HTML")  # Используем токен из конфигурации
     dp = Dispatcher(storage=MemoryStorage())
 
     # Инициализация базы данных и создание таблиц, если их нет
