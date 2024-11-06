@@ -14,6 +14,7 @@ TOKEN = os.getenv("BOT_TOKEN")
 # Настройка логирования
 logging.basicConfig(level=logging.INFO)
 
+
 # Инициализация бота и диспетчера
 async def main():
     config = load_config()  # Загрузка конфигураций
