@@ -1,14 +1,8 @@
-from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
-from sqlalchemy.orm import sessionmaker
+import aiosqlite
 from config import Config
 
-# Создание движка базы данных
-engine = create_async_engine(Config.DATABASE_URL, echo=True)
 
-# Создание фабрики сессий
-async_session = sessionmaker(engine, expire_on_commit=False, class_=AsyncSession)
-
-
-async def get_async_session() -> AsyncSession:
-    async with async_session() as session:
-        yield session
+async def create_db_and_tables():
+    async with aiosqlite.connect(Config.DATABASE_URL) as db:
+        await db.execute("CREATE TABLE IF NOT EXISTS users (id INTEGER PRIMARY KEY, name TEXT)")
+        await db.commit()
