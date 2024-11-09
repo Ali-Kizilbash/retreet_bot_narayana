@@ -6,8 +6,8 @@ load_dotenv()
 
 
 class Config:
-    # Токен и URL базы данных из переменных окружения
-    BOT_TOKEN = os.getenv("BOT_TOKEN")
+    # Токен и URL базы данных из переменных окружения  
+    BOT_TOKEN = os.getenv("BOT_TOKEN", "").strip()
     DATABASE_URL = os.getenv("DATABASE_URL")
 
     # Тексты приветственных сообщений
@@ -22,6 +22,18 @@ class Config:
     )
 
 
+def validate_config():
+    """Проверяет, загружены ли необходимые переменные окружения."""
+    missing_vars = []
+    if not Config.BOT_TOKEN:
+        missing_vars.append("BOT_TOKEN")
+    if not Config.DATABASE_URL:
+        missing_vars.append("DATABASE_URL")
+
+    if missing_vars:
+        raise EnvironmentError(f"Отсутствуют необходимые переменные окружения: {', '.join(missing_vars)}")
+
+
 def load_config():
-    """Функция для загрузки конфигурации"""
+    """Возвращает экземпляр Config для использования в других частях кода."""
     return Config
