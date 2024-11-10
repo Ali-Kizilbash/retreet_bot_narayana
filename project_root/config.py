@@ -4,6 +4,7 @@ import os
 # Загрузка переменных окружения
 load_dotenv()
 
+
 class Config:
     # Токен и URL базы данных
     BOT_TOKEN = os.getenv("BOT_TOKEN", "").strip()
@@ -25,6 +26,7 @@ class Config:
         "С возвращением! Чем могу помочь?"
     )
 
+
 def validate_config():
     """Проверяет, загружены ли необходимые переменные окружения."""
     missing_vars = []
@@ -35,6 +37,7 @@ def validate_config():
 
     if missing_vars:
         raise EnvironmentError(f"Отсутствуют необходимые переменные окружения: {', '.join(missing_vars)}")
+
 
 def load_config():
     """Возвращает экземпляр Config для использования в других частях кода."""

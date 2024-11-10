@@ -9,7 +9,7 @@ from app.database.db import get_async_session
 from app.keyboards.client_kb import (
     get_client_type_keyboard,
     get_general_menu_keyboard,
-    get_organizer_menu_keyboard
+    get_organizer_combined_menu_keyboard
 )
 from app.keyboards.admin_kb import get_admin_menu
 
@@ -105,16 +105,16 @@ async def process_client_type(callback_query: CallbackQuery):
         if client_type == "organizer":
             await callback_query.message.answer("Вы выбрали категорию: Организатор мероприятий.")
             await callback_query.message.answer(
-                "Вы можете ознакомиться предложением для организаторов групповых мероприятий",
-                reply_markup=get_organizer_menu_keyboard()
+                "Вы можете ознакомиться с предложением для организаторов и другой важной информацией:",
+                reply_markup=get_organizer_combined_menu_keyboard()  # Показываем объединённое меню для организаторов
             )
         elif client_type == "individual":
             await callback_query.message.answer("Вы выбрали категорию: Индивидуальный клиент.")
+            await callback_query.message.answer(
+                "Выберите нужную информацию:",
+                reply_markup=get_general_menu_keyboard()  # Обычное меню для индивидуальных клиентов
+            )
 
-        await callback_query.message.answer(
-            "Выберите нужную информацию:",
-            reply_markup=get_general_menu_keyboard()
-        )
         await callback_query.answer()  # Закрываем всплывающее уведомление
         print("Выбор типа клиента обработан успешно.")
     except Exception as e:

@@ -10,10 +10,12 @@ def get_client_type_keyboard():
     return keyboard
 
 
-def get_organizer_menu_keyboard():
-    """Клавиатура для организатора мероприятий с кнопкой для получения памятки."""
+def get_organizer_combined_menu_keyboard():
+    """Клавиатура для организатора мероприятий с объединёнными кнопками."""
     keyboard = InlineKeyboardMarkup(inline_keyboard=[
-        [InlineKeyboardButton(text="Предложение для организаторов", callback_data="organizer_guide")]
+        [InlineKeyboardButton(text="Предложение для организаторов", callback_data="organizer_guide")],
+        [InlineKeyboardButton(text="Правила проживания", callback_data="rules")],
+        [InlineKeyboardButton(text="Как добраться", callback_data="directions")]
     ])
     return keyboard
 
