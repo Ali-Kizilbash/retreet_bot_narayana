@@ -1,0 +1,88 @@
+2024-11-09 18:58:09,341 - __main__ - INFO - Запуск основного цикла.
+2024-11-09 18:58:09,342 - __main__ - INFO - Конфигурация успешно проверена.
+2024-11-09 18:58:09,342 - __main__ - INFO - Конфигурация загружена успешно.
+2024-11-09 18:58:09,342 - __main__ - INFO - Длина токена: 46
+2024-11-09 18:58:20,914 - __main__ - INFO - Бот успешно авторизован. Информация о боте: id=7644663625 is_bot=True first_name='Нараяна бот поддержки' last_name=None username='narayana_retreat_bot' language_code=None is_premium=None added_to_attachment_menu=None can_join_groups=True can_read_all_group_messages=False supports_inline_queries=False can_connect_to_business=False has_main_web_app=False
+2024-11-09 18:58:20,915 - __main__ - INFO - Роутеры подключены.
+2024-11-09 18:58:20,917 - __main__ - INFO - Запуск бота...
+2024-11-09 18:58:20,917 - aiogram.dispatcher - INFO - Start polling
+2024-11-09 18:58:21,005 - aiogram.dispatcher - INFO - Run polling for bot @narayana_retreat_bot id=7644663625 - 'Нараяна бот поддержки'
+2024-11-09 18:58:25,882 - app.handlers.common - INFO - Команда /start получена от пользователя ID: 615756708, Username: None
+2024-11-09 18:58:25,883 - app.handlers.common - INFO - Пользователь не является админом или сотрудником.
+2024-11-09 18:58:27,692 - app.handlers.common - INFO - Показано меню выбора категории клиента.
+2024-11-09 18:58:27,692 - aiogram.event - INFO - Update id=599427616 is handled. Duration 1812 ms by bot id=7644663625
+2024-11-09 18:58:37,443 - app.handlers.common - INFO - Обработка выбора типа клиента: organizer
+2024-11-09 18:58:38,478 - app.handlers.common - INFO - Выбор типа клиента обработан успешно.
+2024-11-09 18:58:38,478 - aiogram.event - INFO - Update id=599427617 is handled. Duration 1046 ms by bot id=7644663625
+2024-11-09 18:58:43,199 - app.handlers.common - INFO - Запрос на отправку руководства организатора. Путь к файлу: resources/event_organizer_guide.pdf
+2024-11-09 18:58:43,368 - app.handlers.common - WARNING - Файл event_organizer_guide.pdf не найден.
+2024-11-09 18:58:43,490 - aiogram.event - INFO - Update id=599427618 is handled. Duration 280 ms by bot id=7644663625
+2024-11-09 19:00:10,610 - app.handlers.common - INFO - Отправка правил проживания.
+2024-11-09 19:00:11,099 - app.handlers.common - INFO - Правила проживания успешно отправлены.
+2024-11-09 19:00:11,100 - aiogram.event - INFO - Update id=599427619 is handled. Duration 484 ms by bot id=7644663625
+2024-11-09 19:06:23,733 - aiogram.dispatcher - INFO - Polling stopped
+2024-11-09 19:06:24,001 - __main__ - INFO - Закрытие сессии бота.
+2024-11-09 19:06:24,001 - aiogram.dispatcher - INFO - Polling stopped for bot @narayana_retreat_bot id=7644663625 - 'Нараяна бот поддержки'
+2024-11-09 19:06:38,901 - __main__ - INFO - Запуск основного цикла.
+2024-11-09 19:06:38,901 - __main__ - INFO - Конфигурация успешно проверена.
+2024-11-09 19:06:38,901 - __main__ - INFO - Конфигурация загружена успешно.
+2024-11-09 19:06:38,901 - __main__ - INFO - Длина токена: 46
+2024-11-09 19:06:50,487 - __main__ - INFO - Бот успешно авторизован. Информация о боте: id=7644663625 is_bot=True first_name='Нараяна бот поддержки' last_name=None username='narayana_retreat_bot' language_code=None is_premium=None added_to_attachment_menu=None can_join_groups=True can_read_all_group_messages=False supports_inline_queries=False can_connect_to_business=False has_main_web_app=False
+2024-11-09 19:06:50,487 - __main__ - INFO - Роутеры подключены.
+2024-11-09 19:06:50,487 - __main__ - INFO - Запуск бота...
+2024-11-09 19:06:50,487 - aiogram.dispatcher - INFO - Start polling
+2024-11-09 19:06:50,575 - aiogram.dispatcher - INFO - Run polling for bot @narayana_retreat_bot id=7644663625 - 'Нараяна бот поддержки'
+2024-11-09 19:06:50,698 - app.handlers.common - INFO - Команда /start получена от пользователя ID: 615756708, Username: None
+2024-11-09 19:06:50,699 - app.handlers.common - INFO - Пользователь не является админом или сотрудником.
+2024-11-09 19:06:51,356 - app.handlers.common - INFO - Показано меню выбора категории клиента.
+2024-11-09 19:06:51,356 - aiogram.event - INFO - Update id=599427620 is handled. Duration 655 ms by bot id=7644663625
+2024-11-09 19:07:09,008 - app.handlers.common - INFO - Обработка выбора типа клиента: organizer
+2024-11-09 19:07:10,012 - app.handlers.common - INFO - Выбор типа клиента обработан успешно.
+2024-11-09 19:07:10,012 - aiogram.event - INFO - Update id=599427621 is handled. Duration 1000 ms by bot id=7644663625
+2024-11-09 19:07:16,597 - app.handlers.common - INFO - Запрос на отправку руководства организатора. Путь к файлу: C:\Users\user\Desktop\develop\study\retreet_bot_narayana\project_root\resources\event_organizer_guide.pdf
+2024-11-09 19:07:16,743 - app.handlers.common - WARNING - Файл C:\Users\user\Desktop\develop\study\retreet_bot_narayana\project_root\resources\event_organizer_guide.pdf не найден.
+2024-11-09 19:07:16,878 - aiogram.event - INFO - Update id=599427622 is handled. Duration 281 ms by bot id=7644663625
+2024-11-09 19:08:28,668 - aiogram.dispatcher - INFO - Polling stopped
+2024-11-09 19:08:28,927 - __main__ - INFO - Закрытие сессии бота.
+2024-11-09 19:08:28,928 - aiogram.dispatcher - INFO - Polling stopped for bot @narayana_retreat_bot id=7644663625 - 'Нараяна бот поддержки'
+2024-11-09 19:08:38,078 - __main__ - INFO - Запуск основного цикла.
+2024-11-09 19:08:38,079 - __main__ - INFO - Конфигурация успешно проверена.
+2024-11-09 19:08:38,079 - __main__ - INFO - Конфигурация загружена успешно.
+2024-11-09 19:08:38,079 - __main__ - INFO - Длина токена: 46
+2024-11-09 19:08:49,703 - __main__ - INFO - Бот успешно авторизован. Информация о боте: id=7644663625 is_bot=True first_name='Нараяна бот поддержки' last_name=None username='narayana_retreat_bot' language_code=None is_premium=None added_to_attachment_menu=None can_join_groups=True can_read_all_group_messages=False supports_inline_queries=False can_connect_to_business=False has_main_web_app=False
+2024-11-09 19:08:49,703 - __main__ - INFO - Роутеры подключены.
+2024-11-09 19:08:49,703 - __main__ - INFO - Запуск бота...
+2024-11-09 19:08:49,703 - aiogram.dispatcher - INFO - Start polling
+2024-11-09 19:08:49,785 - aiogram.dispatcher - INFO - Run polling for bot @narayana_retreat_bot id=7644663625 - 'Нараяна бот поддержки'
+2024-11-09 19:08:49,902 - app.handlers.common - INFO - Команда /start получена от пользователя ID: 615756708, Username: None
+2024-11-09 19:08:49,902 - app.handlers.common - INFO - Пользователь не является админом или сотрудником.
+2024-11-09 19:08:50,464 - app.handlers.common - INFO - Показано меню выбора категории клиента.
+2024-11-09 19:08:50,464 - aiogram.event - INFO - Update id=599427623 is handled. Duration 562 ms by bot id=7644663625
+2024-11-09 19:08:55,737 - app.handlers.common - INFO - Обработка выбора типа клиента: organizer
+2024-11-09 19:08:56,315 - app.handlers.common - INFO - Выбор типа клиента обработан успешно.
+2024-11-09 19:08:56,315 - aiogram.event - INFO - Update id=599427624 is handled. Duration 578 ms by bot id=7644663625
+2024-11-09 19:08:58,048 - app.handlers.common - INFO - Запрос на отправку руководства организатора. Абсолютный путь к файлу: C:\Users\user\Desktop\develop\study\retreet_bot_narayana\project_root\resources\event_organizer_guide.pdf
+2024-11-09 19:08:58,242 - app.handlers.common - WARNING - Файл C:\Users\user\Desktop\develop\study\retreet_bot_narayana\project_root\resources\event_organizer_guide.pdf не найден.
+2024-11-09 19:08:58,480 - aiogram.event - INFO - Update id=599427625 is handled. Duration 438 ms by bot id=7644663625
+2024-11-09 19:10:51,672 - app.handlers.common - INFO - Запрос на отправку руководства организатора. Абсолютный путь к файлу: C:\Users\user\Desktop\develop\study\retreet_bot_narayana\project_root\resources\event_organizer_guide.pdf
+2024-11-09 19:10:52,001 - app.handlers.common - WARNING - Файл C:\Users\user\Desktop\develop\study\retreet_bot_narayana\project_root\resources\event_organizer_guide.pdf не найден.
+2024-11-09 19:10:52,122 - aiogram.event - INFO - Update id=599427626 is handled. Duration 454 ms by bot id=7644663625
+2024-11-09 19:17:44,445 - aiogram.dispatcher - INFO - Polling stopped
+2024-11-09 19:17:44,708 - __main__ - INFO - Закрытие сессии бота.
+2024-11-09 19:17:44,708 - aiogram.dispatcher - INFO - Polling stopped for bot @narayana_retreat_bot id=7644663625 - 'Нараяна бот поддержки'
+2024-11-09 19:17:48,963 - __main__ - INFO - Запуск основного цикла.
+2024-11-09 19:17:48,963 - __main__ - INFO - Конфигурация успешно проверена.
+2024-11-09 19:17:48,963 - __main__ - INFO - Конфигурация загружена успешно.
+2024-11-09 19:17:48,963 - __main__ - INFO - Длина токена: 46
+2024-11-09 19:18:00,589 - __main__ - INFO - Бот успешно авторизован. Информация о боте: id=7644663625 is_bot=True first_name='Нараяна бот поддержки' last_name=None username='narayana_retreat_bot' language_code=None is_premium=None added_to_attachment_menu=None can_join_groups=True can_read_all_group_messages=False supports_inline_queries=False can_connect_to_business=False has_main_web_app=False
+2024-11-09 19:18:00,590 - __main__ - INFO - Роутеры подключены.
+2024-11-09 19:18:00,590 - __main__ - INFO - Запуск бота...
+2024-11-09 19:18:00,591 - aiogram.dispatcher - INFO - Start polling
+2024-11-09 19:18:00,671 - aiogram.dispatcher - INFO - Run polling for bot @narayana_retreat_bot id=7644663625 - 'Нараяна бот поддержки'
+2024-11-09 19:18:00,763 - app.handlers.common - INFO - Запрос на отправку руководства организатора. Абсолютный путь к файлу: C:\Users\user\Desktop\develop\study\retreet_bot_narayana\resources\event_organizer_guide.pdf
+2024-11-09 19:18:00,764 - app.handlers.common - WARNING - Папка C:\Users\user\Desktop\develop\study\retreet_bot_narayana\resources не существует.
+2024-11-09 19:18:01,127 - app.handlers.common - WARNING - Файл C:\Users\user\Desktop\develop\study\retreet_bot_narayana\resources\event_organizer_guide.pdf не найден.
+2024-11-09 19:18:01,220 - aiogram.event - INFO - Update id=599427627 is handled. Duration 453 ms by bot id=7644663625
+2024-11-09 19:21:30,396 - aiogram.dispatcher - INFO - Polling stopped
+2024-11-09 19:21:30,648 - __main__ - INFO - Закрытие сессии бота.
+2024-11-09 19:21:30,648 - aiogram.dispatcher - INFO - Polling stopped for bot @narayana_retreat_bot id=7644663625 - 'Нараяна бот поддержки'

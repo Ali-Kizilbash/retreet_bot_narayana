@@ -13,7 +13,7 @@ def get_client_type_keyboard():
 def get_organizer_menu_keyboard():
     """Клавиатура для организатора мероприятий с кнопкой для получения памятки."""
     keyboard = InlineKeyboardMarkup(inline_keyboard=[
-        [InlineKeyboardButton(text="Памятка для организаторов", callback_data="organizer_guide")]
+        [InlineKeyboardButton(text="Предложение для организаторов", callback_data="organizer_guide")]
     ])
     return keyboard
 

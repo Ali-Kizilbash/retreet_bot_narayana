@@ -1,17 +1,27 @@
+import os
+import logging
 from aiogram import Router, types
-from aiogram.types import CallbackQuery, InputFile
+from aiogram.types import CallbackQuery, FSInputFile
 from aiogram.filters import Command
 from config import Config, validate_config
-from app.database.crud import user_is_registered, register_user  # Импорт функций для работы с БД
-from app.database.db import get_async_session  # Импорт функции для получения сессии базы данных
+from app.database.crud import user_is_registered, register_user
+from app.database.db import get_async_session
 from app.keyboards.client_kb import (
     get_client_type_keyboard,
     get_general_menu_keyboard,
     get_organizer_menu_keyboard
-)  # Импорт клавиатур
-from app.keyboards.admin_kb import get_admin_menu  # Импорт клавиатуры для админ-панели
-import os
+)
+from app.keyboards.admin_kb import get_admin_menu
 
+# Настройка логирования
+logging.basicConfig(
+    level=logging.INFO,  # Можно установить уровень на DEBUG для более подробных логов
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+    handlers=[
+        logging.StreamHandler()  # Логи будут выводиться в консоль
+    ]
+)
+logger = logging.getLogger(__name__)
 # Проверяем наличие необходимых переменных окружения
 try:
     validate_config()
@@ -63,10 +73,6 @@ async def start_command(message: types.Message):
     username = message.from_user.username
     print(f"Команда /start получена от пользователя: {username}")
 
-    if not username:
-        await message.answer("Для работы с ботом, пожалуйста, установите username в настройках Telegram.")
-        return
-
     if username == OWNER_USERNAME:
         print("Показываем админ-панель владельцу.")
         await message.answer("Харибол, многоуважаемый Вениамин! Добро пожаловать в ваш бот клиентской поддержки.")
@@ -99,7 +105,7 @@ async def process_client_type(callback_query: CallbackQuery):
         if client_type == "organizer":
             await callback_query.message.answer("Вы выбрали категорию: Организатор мероприятий.")
             await callback_query.message.answer(
-                "Пожалуйста, выберите действие:",
+                "Вы можете ознакомиться предложением для организаторов групповых мероприятий",
                 reply_markup=get_organizer_menu_keyboard()
             )
         elif client_type == "individual":
@@ -117,19 +123,29 @@ async def process_client_type(callback_query: CallbackQuery):
 
 @router.callback_query(lambda c: c.data == "organizer_guide")
 async def send_organizer_guide(callback_query: CallbackQuery):
-    pdf_path = "resources/event_organizer_guide.pdf"
-    print(f"Запрос на отправку руководства организатора. Путь к файлу: {pdf_path}")
+    # Немедленно отвечаем на callback-запрос
+    await callback_query.answer()
+
+    pdf_path = os.path.abspath(Config.EVENT_ORGANIZER_GUIDE_FILE)
+    logger.info(f"Путь к PDF-файлу: {pdf_path}")
+
     if not os.path.exists(pdf_path):
-        await callback_query.message.answer("Памятка для организаторов не найдена.")
-        print("Файл event_organizer_guide.pdf не найден.")
+        await callback_query.message.answer("Предложение для организаторов не найдено.")
+        logger.warning(f"Файл не найден по пути: {pdf_path}")
     else:
         try:
-            pdf_file = InputFile(pdf_path)
-            await callback_query.message.answer_document(pdf_file, caption="Вот памятка для организаторов мероприятий. Ознакомьтесь с условиями.")
-            print("Руководство организатора отправлено успешно.")
+            # Используем FSInputFile для отправки файла из файловой системы
+            pdf_file = FSInputFile(pdf_path)
+            await callback_query.bot.send_document(
+                chat_id=callback_query.from_user.id,
+                document=pdf_file,
+                caption="Вот предложение для организаторов мероприятий. Ознакомьтесь с условиями.")
+
+            logger.info("Файл успешно отправлен.")
         except Exception as e:
-            print(f"Ошибка при отправке руководства организатора: {e}")
-    await callback_query.answer()
+            logger.error(f"Ошибка при отправке руководства организатора: {e}")
+            await callback_query.message.answer("Произошла ошибка при отправке руководства организатора.")
+
 
 
 @router.callback_query(lambda c: c.data == "rules")
