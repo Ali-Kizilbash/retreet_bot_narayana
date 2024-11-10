@@ -1,4 +1,5 @@
 import os
+import aiohttp
 import logging
 from aiogram import Router, types
 from aiogram.types import CallbackQuery, FSInputFile
@@ -170,3 +171,32 @@ async def send_directions(callback_query: CallbackQuery):
         print("Инструкция по прибытии успешно отправлена.")
     except Exception as e:
         print(f"Ошибка при отправке инструкции по прибытии: {e}")
+
+
+# Функция для получения погоды
+async def get_weather():
+    url = Config.WEATHER_API_URL
+    async with aiohttp.ClientSession() as session:
+        async with session.get(url) as response:
+            if response.status == 200:
+                data = await response.json()
+                
+                # Получаем необходимые данные
+                temp = data["current_weather"]["temperature"]
+                windspeed = data["current_weather"]["windspeed"]
+                weather_code = data["current_weather"]["weathercode"]
+
+                # Преобразуем weathercode в описание на русском
+                weather_description_ru = Config.WEATHER_CODES.get(weather_code, "Неизвестная погода")
+
+                return f"Сейчас в Сочи: {temp}°C, {weather_description_ru}, скорость ветра: {windspeed} км/ч."
+            else:
+                return "Не удалось получить данные о погоде. Попробуйте позже."
+
+
+# Обработчик для кнопки "Узнать погоду"
+@router.callback_query(lambda c: c.data == "weather")
+async def send_weather(callback_query: CallbackQuery):
+    await callback_query.answer()  # Немедленно отвечаем на callback-запрос
+    weather_info = await get_weather()
+    await callback_query.message.answer(weather_info)

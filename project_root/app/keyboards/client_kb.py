@@ -15,7 +15,8 @@ def get_organizer_combined_menu_keyboard():
     keyboard = InlineKeyboardMarkup(inline_keyboard=[
         [InlineKeyboardButton(text="Предложение для организаторов", callback_data="organizer_guide")],
         [InlineKeyboardButton(text="Правила проживания", callback_data="rules")],
-        [InlineKeyboardButton(text="Как добраться", callback_data="directions")]
+        [InlineKeyboardButton(text="Как добраться", callback_data="directions")],
+        [InlineKeyboardButton(text="Узнать погоду в Сочи", callback_data="weather")]
     ])
     return keyboard
 
@@ -24,6 +25,7 @@ def get_general_menu_keyboard():
     """Общая клавиатура для всех клиентов с кнопками для получения информации."""
     keyboard = InlineKeyboardMarkup(inline_keyboard=[
         [InlineKeyboardButton(text="Правила проживания", callback_data="rules")],
-        [InlineKeyboardButton(text="Как добраться", callback_data="directions")]
+        [InlineKeyboardButton(text="Как добраться", callback_data="directions")],
+        [InlineKeyboardButton(text="Узнать погоду в Сочи", callback_data="weather")]
     ])
     return keyboard
