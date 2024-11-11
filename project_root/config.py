@@ -55,6 +55,44 @@ class Config:
         99: "гроза с сильным градом"
     }
 
+    # Ссылки по категориям
+    LINKS = {
+        "social_networks": [
+            {"name": "Instagram", "url": "https://instagram.com/narayana.center"},
+            {"name": "Instagram 2", "url": "https://www.instagram.com/narayana_center?igsh=ZXdjOHVjNWpjMDQy"},
+            {"name": "VK страница", "url": "https://vk.com/narayana.center"},
+            {"name": "VK группа", "url": "https://vk.com/narayana.sochi"},
+            {"name": "VK страница 2", "url": "https://vk.com/narayana_center108"},
+            {"name": "Соц. сеть йогов", "url": "https://t.me/Narayana_social"}
+        ],
+        "announcements": [
+            {"name": "Анонсы мероприятий", "url": "https://t.me/narayana_retreat_center"},
+            {"name": "Анонсы мероприятий 2", "url": "https://t.me/narayanacenter"}
+        ],
+        "maps": [
+            {"name": "Google Maps", "url": "https://www.google.ru/maps/place/Нараяна/@43.6809883,39.6058015,17z"},
+            {"name": "Яндекс Карты", "url": "https://yandex.ru/maps/org/narayana/192015920362/?ll=39.607847%2C43.680902"},
+            {"name": "2Гис", "url": "https://2gis.ru/sochi/firm/70000001049866178?m=39.607907%2C43.680824%2F16"}
+        ],
+        "contact_details": [
+            {"name": "Почта", "url": "mailto:info@narayana.center"}
+        ],
+        "website": [
+            {"name": "Наш сайт", "url": "https://narayana.center"},
+            {"name": "Таплинк", "url": "https://narayana.taplink.ws/"}
+        ],
+        "store": [
+            {"name": "Интернет магазин", "url": "http://shop.narayana.center/"}
+        ],
+        "organizer_chat": [
+            {"name": "Чат для организаторов", "url": "https://t.me/Retreats_Narayana"}
+        ],
+        "video": [
+            {"name": "Нараяна", "url": "https://youtube.com/@centernarayana"},
+            {"name": "Видео-обзор Ретрит-центра", "url": "https://youtu.be/26R-lgMgfOY"}
+        ]
+    }
+
 
 def validate_config():
     """Проверяет, загружены ли необходимые переменные окружения."""

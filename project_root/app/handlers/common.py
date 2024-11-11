@@ -9,8 +9,7 @@ from app.database.crud import user_is_registered, register_user
 from app.database.db import get_async_session
 from app.keyboards.client_kb import (
     get_client_type_keyboard,
-    get_general_menu_keyboard,
-    get_organizer_combined_menu_keyboard
+    get_main_menu_keyboard
 )
 from app.keyboards.admin_kb import get_admin_menu
 
@@ -106,20 +105,21 @@ async def process_client_type(callback_query: CallbackQuery):
         if client_type == "organizer":
             await callback_query.message.answer("Вы выбрали категорию: Организатор мероприятий.")
             await callback_query.message.answer(
-                "Вы можете ознакомиться с предложением для организаторов и другой важной информацией:",
-                reply_markup=get_organizer_combined_menu_keyboard()  # Показываем объединённое меню для организаторов
+                "Пожалуйста, выберите нужное меню:",
+                reply_markup=get_main_menu_keyboard(is_organizer=True)  # Меню с дополнительными кнопками для организаторов
             )
         elif client_type == "individual":
             await callback_query.message.answer("Вы выбрали категорию: Индивидуальный клиент.")
             await callback_query.message.answer(
-                "Выберите нужную информацию:",
-                reply_markup=get_general_menu_keyboard()  # Обычное меню для индивидуальных клиентов
+                "Пожалуйста, выберите нужное меню:",
+                reply_markup=get_main_menu_keyboard()  # Меню для индивидуальных клиентов
             )
 
         await callback_query.answer()  # Закрываем всплывающее уведомление
         print("Выбор типа клиента обработан успешно.")
     except Exception as e:
         print(f"Ошибка при обработке выбора типа клиента: {e}")
+
 
 
 @router.callback_query(lambda c: c.data == "organizer_guide")
@@ -200,3 +200,79 @@ async def send_weather(callback_query: CallbackQuery):
     await callback_query.answer()  # Немедленно отвечаем на callback-запрос
     weather_info = await get_weather()
     await callback_query.message.answer(weather_info)
+
+
+async def send_links(callback_query: CallbackQuery, links):
+    """Отправка списка ссылок."""
+    message_text = ""
+    for link in links:
+        message_text += f"{link['name']}: [ссылка]({link['url']})\n"
+    
+    await callback_query.message.answer(message_text, parse_mode="Markdown")
+
+@router.callback_query(lambda c: c.data == "social_networks")
+async def send_social_networks(callback_query: CallbackQuery):
+    await callback_query.answer()
+    await send_links(callback_query, Config.LINKS["social_networks"])
+
+@router.callback_query(lambda c: c.data == "announcements")
+async def send_announcements(callback_query: CallbackQuery):
+    await callback_query.answer()
+    await send_links(callback_query, Config.LINKS["announcements"])
+
+@router.callback_query(lambda c: c.data == "maps")
+async def send_maps(callback_query: CallbackQuery):
+    await callback_query.answer()
+    await send_links(callback_query, Config.LINKS["maps"])
+
+@router.callback_query(lambda c: c.data == "contact_details")
+async def send_contact_details(callback_query: CallbackQuery):
+    await callback_query.answer()
+    await send_links(callback_query, Config.LINKS["contact_details"])
+
+@router.callback_query(lambda c: c.data == "website")
+async def send_website(callback_query: CallbackQuery):
+    await callback_query.answer()
+    await send_links(callback_query, Config.LINKS["website"])
+
+@router.callback_query(lambda c: c.data == "store")
+async def send_store(callback_query: CallbackQuery):
+    await callback_query.answer()
+    await send_links(callback_query, Config.LINKS["store"])
+
+@router.callback_query(lambda c: c.data == "organizer_chat")
+async def send_organizer_chat(callback_query: CallbackQuery):
+    await callback_query.answer()
+    await send_links(callback_query, Config.LINKS["organizer_chat"])
+
+@router.callback_query(lambda c: c.data == "video")
+async def send_video(callback_query: CallbackQuery):
+    await callback_query.answer()
+    await send_links(callback_query, Config.LINKS["video"])
+
+@router.callback_query(lambda c: c.data == "rules")
+async def send_rules(callback_query: CallbackQuery):
+    rules_text = load_text(Config.RULES_FILE)
+    await callback_query.answer()
+    await callback_query.message.answer(rules_text)
+
+@router.callback_query(lambda c: c.data == "directions")
+async def send_directions(callback_query: CallbackQuery):
+    directions_text = load_text(Config.DIRECTIONS_FILE)
+    await callback_query.answer()
+    await callback_query.message.answer(directions_text)
+
+@router.callback_query(lambda c: c.data == "organizer_guide")
+async def send_organizer_guide(callback_query: CallbackQuery):
+    await callback_query.answer()  # Немедленно отвечаем на callback-запрос
+
+    pdf_path = Config.EVENT_ORGANIZER_GUIDE_FILE
+    if not os.path.exists(pdf_path):
+        await callback_query.message.answer("Предложение для организаторов не найдено.")
+    else:
+        pdf_file = FSInputFile(pdf_path)
+        await callback_query.bot.send_document(
+            chat_id=callback_query.from_user.id,
+            document=pdf_file,
+            caption="Вот предложение для организаторов мероприятий. Ознакомьтесь с условиями."
+        )

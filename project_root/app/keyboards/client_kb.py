@@ -10,22 +10,24 @@ def get_client_type_keyboard():
     return keyboard
 
 
-def get_organizer_combined_menu_keyboard():
-    """Клавиатура для организатора мероприятий с объединёнными кнопками."""
+def get_main_menu_keyboard(is_organizer=False):
+    """Основное меню для всех клиентов, с дополнительными кнопками для организаторов."""
     keyboard = InlineKeyboardMarkup(inline_keyboard=[
-        [InlineKeyboardButton(text="Предложение для организаторов", callback_data="organizer_guide")],
+        [InlineKeyboardButton(text="Узнать погоду в Сочи", callback_data="weather")],
+        [InlineKeyboardButton(text="Наши соцсети", callback_data="social_networks")],
+        [InlineKeyboardButton(text="Анонсы мероприятий", callback_data="announcements")],
+        [InlineKeyboardButton(text="Мы на картах", callback_data="maps")],
+        [InlineKeyboardButton(text="Контактные данные", callback_data="contact_details")],
+        [InlineKeyboardButton(text="Наш сайт", callback_data="website")],
+        [InlineKeyboardButton(text="Интернет магазин", callback_data="store")],
+        [InlineKeyboardButton(text="Видео", callback_data="video")],
         [InlineKeyboardButton(text="Правила проживания", callback_data="rules")],
-        [InlineKeyboardButton(text="Как добраться", callback_data="directions")],
-        [InlineKeyboardButton(text="Узнать погоду в Сочи", callback_data="weather")]
+        [InlineKeyboardButton(text="Как добраться", callback_data="directions")]
     ])
-    return keyboard
 
+    # Добавляем дополнительные кнопки для организаторов
+    if is_organizer:
+        keyboard.inline_keyboard.append([InlineKeyboardButton(text="Предложение для организаторов", callback_data="organizer_guide")])
+        keyboard.inline_keyboard.append([InlineKeyboardButton(text="Чат для организаторов", callback_data="organizer_chat")])
 
-def get_general_menu_keyboard():
-    """Общая клавиатура для всех клиентов с кнопками для получения информации."""
-    keyboard = InlineKeyboardMarkup(inline_keyboard=[
-        [InlineKeyboardButton(text="Правила проживания", callback_data="rules")],
-        [InlineKeyboardButton(text="Как добраться", callback_data="directions")],
-        [InlineKeyboardButton(text="Узнать погоду в Сочи", callback_data="weather")]
-    ])
     return keyboard
