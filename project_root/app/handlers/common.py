@@ -9,7 +9,7 @@ from app.database.crud import user_is_registered, register_user
 from app.database.db import get_async_session
 from app.keyboards.client_kb import (
     get_client_type_keyboard,
-    get_main_menu_keyboard
+    get_two_column_keyboard
 )
 from app.keyboards.admin_kb import get_admin_menu
 
@@ -99,26 +99,32 @@ async def start_command(message: types.Message):
 @router.callback_query(lambda c: c.data and c.data.startswith("client_type:"))
 async def process_client_type(callback_query: CallbackQuery):
     client_type = callback_query.data.split(":")[1]
-    print(f"Обработка выбора типа клиента: {client_type}")
-    
+    logger.info(f"Обработка выбора типа клиента: {client_type}")
+
     try:
         if client_type == "organizer":
-            await callback_query.message.answer("Вы выбрали категорию: Организатор мероприятий.")
+            logger.info("Пользователь выбрал категорию: Организатор мероприятий.")
+            await callback_query.message.answer(
+                "Вы выбрали категорию: Организатор мероприятий."
+            )
             await callback_query.message.answer(
                 "Пожалуйста, выберите нужное меню:",
-                reply_markup=get_main_menu_keyboard(is_organizer=True)  # Меню с дополнительными кнопками для организаторов
+                reply_markup=get_two_column_keyboard(is_organizer=True)  # Меню с доп. кнопками для организаторов
             )
         elif client_type == "individual":
-            await callback_query.message.answer("Вы выбрали категорию: Индивидуальный клиент.")
+            logger.info("Пользователь выбрал категорию: Индивидуальный клиент.")
+            await callback_query.message.answer(
+                "Вы выбрали категорию: Индивидуальный клиент."
+            )
             await callback_query.message.answer(
                 "Пожалуйста, выберите нужное меню:",
-                reply_markup=get_main_menu_keyboard()  # Меню для индивидуальных клиентов
+                reply_markup=get_two_column_keyboard()  # Меню для индивидуальных клиентов
             )
 
         await callback_query.answer()  # Закрываем всплывающее уведомление
-        print("Выбор типа клиента обработан успешно.")
+        logger.info("Выбор типа клиента обработан успешно.")
     except Exception as e:
-        print(f"Ошибка при обработке выбора типа клиента: {e}")
+        logger.error(f"Ошибка при обработке выбора типа клиента: {e}")
 
 
 
