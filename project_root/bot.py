@@ -4,9 +4,12 @@ from aiogram import Bot, Dispatcher
 from aiogram.client.bot import DefaultBotProperties
 from aiogram.fsm.storage.memory import MemoryStorage
 from config import load_config, validate_config
-from app.handlers import common_router, client_router, admin_router, support_router
-from aiogram.types import Message
-from aiogram.filters import Command
+from app.handlers import (common_router, client_router,
+                          admin_router, support_router)
+
+
+# Импорт функции для установки команд
+from app.keyboards.set_commands import set_bot_commands
 
 # Настройка логирования
 logging.basicConfig(level=logging.INFO)
@@ -45,6 +48,9 @@ async def main():
     except Exception as e:
         print("Ошибка авторизации бота:", e)
         exit(1)
+
+    # Установка команд меню
+    await set_bot_commands(bot)
 
     # Инициализация диспетчера
     dp = Dispatcher(storage=MemoryStorage())
