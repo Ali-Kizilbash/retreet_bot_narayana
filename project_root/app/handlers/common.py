@@ -2,15 +2,13 @@ import os
 import aiohttp
 import logging
 from aiogram import Router, types
+from aiogram.types import Message
 from aiogram.types import CallbackQuery, FSInputFile
 from aiogram.filters import Command
 from config import Config, validate_config
 from app.database.crud import user_is_registered, register_user
 from app.database.db import get_async_session
-from app.keyboards.client_kb import (
-    get_client_type_keyboard,
-    get_two_column_keyboard
-)
+from app.keyboards.client_kb import get_client_type_keyboard, get_two_column_keyboard
 from app.keyboards.admin_kb import get_admin_menu
 
 # Настройка логирования
@@ -67,6 +65,11 @@ def load_text(file_path):
         print(f"Ошибка при загрузке текста из {file_path}: {e}")
         return "Ошибка при загрузке файла."
 
+
+@router.message(Command("menu"))
+async def show_main_menu(message: Message):
+    """Обработчик для команды /menu, отправляет главное меню."""
+    await message.answer("Выберите действие из меню:", reply_markup=get_two_column_keyboard())
 
 @router.message(Command("start"))  # Используем Command для регистрации команды /start
 async def start_command(message: types.Message):

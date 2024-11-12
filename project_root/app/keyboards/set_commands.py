@@ -2,7 +2,6 @@ from aiogram import Bot
 from aiogram.types import BotCommand
 import logging
 
-# Логирование процесса установки команд
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
@@ -12,9 +11,9 @@ async def set_bot_commands(bot: Bot):
     commands = [
         BotCommand(command="start", description="Запустить бота"),
         BotCommand(command="menu", description="Показать главное меню"),
-        BotCommand(command="shop", description="Перейти в магазин"),  # Команда для магазина
+        BotCommand(command="shop", description="Перейти в магазин"),
         BotCommand(command="manager", description="Связаться с менеджером"),
-        BotCommand(command="website", description="Перейти на сайт")  # Замена промокодов на ссылку на сайт
+        BotCommand(command="website", description="Перейти на сайт")  # Обновлено: добавлена команда website
     ]
     try:
         await bot.set_my_commands(commands)

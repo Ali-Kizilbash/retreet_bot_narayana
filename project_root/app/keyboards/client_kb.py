@@ -1,6 +1,5 @@
 from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup
 
-
 def get_client_type_keyboard():
     """Клавиатура для выбора типа клиента."""
     keyboard = InlineKeyboardMarkup(inline_keyboard=[
@@ -8,7 +7,6 @@ def get_client_type_keyboard():
         [InlineKeyboardButton(text="Я индивидуальный клиент", callback_data="client_type:individual")]
     ])
     return keyboard
-
 
 def get_two_column_keyboard(is_organizer=False):
     """Создает меню с кнопками в две колонки."""
@@ -25,19 +23,16 @@ def get_two_column_keyboard(is_organizer=False):
         InlineKeyboardButton(text="Как добраться", callback_data="directions")
     ]
 
-    # Добавляем дополнительные кнопки для организаторов
     if is_organizer:
         buttons.extend([
             InlineKeyboardButton(text="Предложение для организаторов", callback_data="organizer_guide"),
             InlineKeyboardButton(text="Чат для организаторов", callback_data="organizer_chat")
         ])
 
-    # Формируем клавиатуру, группируя кнопки по две в строке
     keyboard = InlineKeyboardMarkup(inline_keyboard=[
         [buttons[i], buttons[i + 1]] for i in range(0, len(buttons) - 1, 2)
     ])
     
-    # Если нечетное количество кнопок, добавляем последнюю отдельно
     if len(buttons) % 2 != 0:
         keyboard.inline_keyboard.append([buttons[-1]])
 
