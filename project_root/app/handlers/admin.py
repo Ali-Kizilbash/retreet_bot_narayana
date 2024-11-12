@@ -1,8 +1,9 @@
-from aiogram import Router, types #admin.py
+from aiogram import Router, types  #admin.py
 from aiogram.types import CallbackQuery, InputFile
 from aiogram.filters import Command
 import os
-from app.keyboards.admin_kb import get_admin_menu, get_file_management_menu, get_subscriber_stats_menu
+from app.keyboards.admin_kb import (get_admin_menu, get_file_management_menu,
+                                    get_subscriber_stats_menu)
 from app.database.crud import get_subscriber_stats  # Функция для получения статистики
 
 router = Router()

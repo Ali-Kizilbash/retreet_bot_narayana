@@ -12,9 +12,9 @@ async def set_bot_commands(bot: Bot):
     commands = [
         BotCommand(command="start", description="Запустить бота"),
         BotCommand(command="menu", description="Показать главное меню"),
-        BotCommand(command="shop", description="Перейти в магазин"),
+        BotCommand(command="shop", description="Перейти в магазин"),  # Команда для магазина
         BotCommand(command="manager", description="Связаться с менеджером"),
-        BotCommand(command="promo", description="Получить промокоды")
+        BotCommand(command="website", description="Перейти на сайт")  # Замена промокодов на ссылку на сайт
     ]
     try:
         await bot.set_my_commands(commands)

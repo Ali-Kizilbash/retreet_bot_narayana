@@ -5,7 +5,8 @@ from aiogram.client.bot import DefaultBotProperties
 from aiogram.fsm.storage.memory import MemoryStorage
 from config import load_config, validate_config
 from app.handlers import (common_router, client_router,
-                          admin_router, support_router)
+                          admin_router, support_router,
+                          commands_router)
 
 
 # Импорт функции для установки команд
@@ -15,6 +16,7 @@ from app.keyboards.set_commands import set_bot_commands
 logging.basicConfig(level=logging.INFO)
 
 print("Загрузка файла bot.py")  # Сообщение о загрузке файла
+
 
 # Основная функция
 async def main():
@@ -55,24 +57,17 @@ async def main():
     # Инициализация диспетчера
     dp = Dispatcher(storage=MemoryStorage())
     
-    # Подключение роутеров (обработчиков)
     dp.include_router(common_router)
     dp.include_router(client_router)
     dp.include_router(admin_router)
-    dp.include_router(support_router)  # Добавляем support_router, если он существует
-    print("Роутеры подключены.")
+    dp.include_router(support_router)
+    dp.include_router(commands_router)  # Подключаем новый роутер для команд /shop и /website
 
     # Запуск бота
     try:
-        print("Запуск бота...")
         await dp.start_polling(bot)
-    except Exception as e:
-        print(f"Ошибка при запуске бота: {e}")
     finally:
-        print("Закрытие сессии бота.")
         await bot.session.close()
 
-# Запуск основного цикла
 if __name__ == "__main__":
-    print("Запуск основного цикла.")
     asyncio.run(main())
