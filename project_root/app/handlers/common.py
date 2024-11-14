@@ -2,36 +2,34 @@ import os
 import aiohttp
 import logging
 from aiogram import Router, types
-from aiogram.types import Message
-from aiogram.types import CallbackQuery, FSInputFile
+from aiogram.types import Message, CallbackQuery, FSInputFile
 from aiogram.filters import Command
 from config import Config, validate_config
-from app.database.crud import user_is_registered, register_user
-from app.database.db import get_async_session
+# Удалите строки, связанные с базой данных
+# from app.database.crud import user_is_registered, register_user
+# from app.database.db import get_async_session
 from app.keyboards.client_kb import get_client_type_keyboard, get_two_column_keyboard
 from app.keyboards.admin_kb import get_admin_menu
 
 # Настройка логирования
 logging.basicConfig(
-    level=logging.INFO,  # Можно установить уровень на DEBUG для более подробных логов
+    level=logging.INFO,
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-    handlers=[
-        logging.StreamHandler()  # Логи будут выводиться в консоль
-    ]
+    handlers=[logging.StreamHandler()]
 )
 logger = logging.getLogger(__name__)
+
 # Проверяем наличие необходимых переменных окружения
 try:
     validate_config()
     print("Конфигурация успешно проверена.")
 except EnvironmentError as e:
     print(f"Ошибка конфигурации: {e}")
-    exit(1)  # Завершаем выполнение, если отсутствуют необходимые переменные
+    exit(1)
 
 router = Router()
-STAFF_USERNAMES_FILE = "staff_usernames.txt"  # Файл с никнеймами сотрудников
-OWNER_USERNAME = "@Veniamin_tk"  # Никнейм владельца бота
-
+STAFF_USERNAMES_FILE = "staff_usernames.txt"
+OWNER_USERNAME = "@Veniamin_tk"
 
 def is_staff(username: str) -> bool:
     """Проверяет, является ли пользователь сотрудником, сверяя его username с файлом staff_usernames.txt."""
@@ -49,7 +47,6 @@ def is_staff(username: str) -> bool:
         print(f"Файл {STAFF_USERNAMES_FILE} не найден.")
         return False
 
-
 def load_text(file_path):
     """Загружает текст из указанного файла."""
     print(f"Загрузка текста из файла: {file_path}")
@@ -65,13 +62,12 @@ def load_text(file_path):
         print(f"Ошибка при загрузке текста из {file_path}: {e}")
         return "Ошибка при загрузке файла."
 
-
 @router.message(Command("menu"))
 async def show_main_menu(message: Message):
     """Обработчик для команды /menu, отправляет главное меню."""
     await message.answer("Выберите действие из меню:", reply_markup=get_two_column_keyboard())
 
-@router.message(Command("start"))  # Используем Command для регистрации команды /start
+@router.message(Command("start"))
 async def start_command(message: types.Message):
     username = message.from_user.username
     print(f"Команда /start получена от пользователя: {username}")
@@ -85,19 +81,12 @@ async def start_command(message: types.Message):
         await message.answer("Добро пожаловать, сотрудник! Вот ваша админ-панель.")
         await message.answer("Выберите действие:", reply_markup=get_admin_menu())
     else:
-        print("Пользователь не является админом или сотрудником.")
-        async for session in get_async_session():
-            if await user_is_registered(message.from_user.id, session):
-                await message.answer(Config.ALREADY_REGISTERED_MESSAGE)
-            else:
-                await message.answer(Config.WELCOME_MESSAGE)
-                await register_user(message.from_user.id, session)
-                # После регистрации показываем меню с выбором категории
-                await message.answer(
-                    "Приветствуем! Пожалуйста, выберите, кто вы:",
-                    reply_markup=get_client_type_keyboard()
-                )
-
+        # Уберите вызовы функций, завязанных на базу данных
+        await message.answer(Config.WELCOME_MESSAGE)
+        await message.answer(
+            "Приветствуем! Пожалуйста, выберите, кто вы:",
+            reply_markup=get_client_type_keyboard()
+        )
 
 @router.callback_query(lambda c: c.data and c.data.startswith("client_type:"))
 async def process_client_type(callback_query: CallbackQuery):

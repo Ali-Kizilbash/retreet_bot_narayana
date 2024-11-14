@@ -9,7 +9,7 @@ load_dotenv()
 class Config:
     # Токен и URL базы данных
     BOT_TOKEN = os.getenv("BOT_TOKEN", "").strip()
-    DATABASE_URL = os.getenv("DATABASE_URL")
+    DATABASE_URL = os.getenv("DATABASE_URL", None)
 
     # Пути к ресурсам (относительно корня проекта)
     STAFF_USERNAMES_FILE = "resources/staff_usernames.txt"
@@ -99,8 +99,8 @@ def validate_config():
     missing_vars = []
     if not Config.BOT_TOKEN:
         missing_vars.append("BOT_TOKEN")
-    if not Config.DATABASE_URL:
-        missing_vars.append("DATABASE_URL")
+    '''if not Config.DATABASE_URL:
+        missing_vars.append("DATABASE_URL")'''
 
     if missing_vars:
         raise EnvironmentError(f"Отсутствуют необходимые переменные окружения: {', '.join(missing_vars)}")
