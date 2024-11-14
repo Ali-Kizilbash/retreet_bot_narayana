@@ -13,6 +13,7 @@ SUPPORT_CHAT_ID = -1002319130163  # Убедитесь, что это прави
 # Список допустимых расширений для документов
 allowed_extensions = {"pdf", "epub", "fb2", "txt"}
 
+
 # Определение состояния
 class SupportStates(StatesGroup):
     waiting_for_question = State()

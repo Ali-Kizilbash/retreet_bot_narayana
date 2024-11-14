@@ -3,7 +3,9 @@ from .client import router as client_router
 from .admin import router as admin_router
 from .support import router as support_router
 from .commands import router as commands_router
+from .broadcast import router as broadcast_router
 __all__ = ["common_router", "client_router",
            "admin_router", "support_router",
-           "commands_router"
+           "commands_router",
+           "broadcast_router",
            ]

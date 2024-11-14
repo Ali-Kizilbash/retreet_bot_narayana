@@ -1,12 +1,16 @@
-from aiogram import Router, types  #admin.py
-from aiogram.types import CallbackQuery, InputFile
+from aiogram import Router, types
+from aiogram.types import CallbackQuery
 from aiogram.filters import Command
 import os
-from app.keyboards.admin_kb import (get_admin_menu, get_file_management_menu,
-                                    get_subscriber_stats_menu)
+from app.keyboards.admin_kb import (get_admin_menu,
+                                    get_file_management_menu,
+                                    get_subscriber_stats_menu
+)
 from app.database.crud import get_subscriber_stats  # Функция для получения статистики
+import logging
 
 router = Router()
+logger = logging.getLogger(__name__)
 
 @router.message(Command("admin_panel"))
 async def admin_panel(message: types.Message):
@@ -49,8 +53,6 @@ async def view_files(callback_query: CallbackQuery):
         await callback_query.answer()
     except Exception as e:
         print(f"Ошибка при отображении списка файлов: {e}")
-
-# Здесь можно добавить обработчики для добавления, редактирования и удаления файлов
 
 @router.callback_query(lambda c: c.data == "subscriber_stats")
 async def subscriber_stats(callback_query: CallbackQuery):
@@ -109,3 +111,13 @@ async def custom_range(callback_query: CallbackQuery):
         print("Уведомление о разработке функции пользовательского диапазона отправлено.")
     except Exception as e:
         print(f"Ошибка при обработке пользовательского диапазона: {e}")
+
+@router.callback_query(lambda c: c.data == "broadcast_start")
+async def start_broadcast(callback_query: CallbackQuery):
+    """Запуск процесса рассылки через broadcast.py."""
+    try:
+        await callback_query.message.answer("Отправьте текст или документ (txt, doc, pdf, epub, fb2) для рассылки.")
+        await callback_query.answer()
+        print("Процесс рассылки инициирован.")
+    except Exception as e:
+        print(f"Ошибка при запуске рассылки: {e}")

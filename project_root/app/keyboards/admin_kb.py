@@ -7,7 +7,8 @@ def get_admin_menu():
         print("Создание клавиатуры админ-панели.")
         keyboard = InlineKeyboardMarkup(inline_keyboard=[
             [InlineKeyboardButton(text="Управление файлами", callback_data="manage_files")],
-            [InlineKeyboardButton(text="Статистика подписчиков", callback_data="subscriber_stats")]
+            [InlineKeyboardButton(text="Статистика подписчиков", callback_data="subscriber_stats")],
+            [InlineKeyboardButton(text="Запустить рассылку", callback_data="broadcast_start")]  # Кнопка для рассылки
         ])
         print("Клавиатура админ-панели создана успешно.")
         return keyboard

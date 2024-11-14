@@ -4,7 +4,9 @@ from aiogram import Bot, Dispatcher
 from aiogram.client.bot import DefaultBotProperties
 from aiogram.fsm.storage.memory import MemoryStorage
 from config import load_config, validate_config
-from app.handlers import (common_router, client_router, admin_router, support_router, commands_router)
+from app.handlers import (common_router, client_router, admin_router,
+                          support_router, commands_router,
+                          broadcast_router)
 
 # Импорт функции для установки команд
 from app.keyboards.set_commands import set_bot_commands
@@ -62,6 +64,7 @@ async def main():
     dp.include_router(admin_router)
     dp.include_router(support_router)
     dp.include_router(commands_router)
+    dp.include_router(broadcast_router)
 
     # Запуск бота с логированием состояния
     try:
