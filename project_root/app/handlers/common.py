@@ -5,9 +5,8 @@ from aiogram import Router, types
 from aiogram.types import Message, CallbackQuery, FSInputFile
 from aiogram.filters import Command
 from config import Config, validate_config
-# Удалите строки, связанные с базой данных
-# from app.database.crud import user_is_registered, register_user
-# from app.database.db import get_async_session
+from app.database.db import async_session
+from app.database.crud import register_client  # Импортируем register_client
 from app.keyboards.client_kb import get_client_type_keyboard, get_two_column_keyboard
 from app.keyboards.admin_kb import get_admin_menu
 
@@ -30,6 +29,7 @@ except EnvironmentError as e:
 router = Router()
 STAFF_USERNAMES_FILE = "staff_usernames.txt"
 OWNER_USERNAME = "@Veniamin_tk"
+
 
 def is_staff(username: str) -> bool:
     """Проверяет, является ли пользователь сотрудником, сверяя его username с файлом staff_usernames.txt."""
@@ -62,15 +62,21 @@ def load_text(file_path):
         print(f"Ошибка при загрузке текста из {file_path}: {e}")
         return "Ошибка при загрузке файла."
 
-@router.message(Command("menu"))
-async def show_main_menu(message: Message):
-    """Обработчик для команды /menu, отправляет главное меню."""
-    await message.answer("Выберите действие из меню:", reply_markup=get_two_column_keyboard())
-
 @router.message(Command("start"))
 async def start_command(message: types.Message):
     username = message.from_user.username
     print(f"Команда /start получена от пользователя: {username}")
+
+    # Регистрация пользователя в базе данных
+    async with async_session() as session:
+        await register_client(
+            session,
+            user_id=message.from_user.id,
+            first_name=message.from_user.first_name or "Без имени",
+            last_name=message.from_user.last_name or "Без фамилии",
+            client_type="individual"  # Установите значение по умолчанию
+        )
+        print(f"[DEBUG] Пользователь {message.from_user.id} зарегистрирован в базе данных.")
 
     if username == OWNER_USERNAME:
         print("Показываем админ-панель владельцу.")
@@ -81,7 +87,6 @@ async def start_command(message: types.Message):
         await message.answer("Добро пожаловать, сотрудник! Вот ваша админ-панель.")
         await message.answer("Выберите действие:", reply_markup=get_admin_menu())
     else:
-        # Уберите вызовы функций, завязанных на базу данных
         await message.answer(Config.WELCOME_MESSAGE)
         await message.answer(
             "Приветствуем! Пожалуйста, выберите, кто вы:",

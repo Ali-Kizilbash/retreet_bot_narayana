@@ -3,6 +3,8 @@ from aiogram.filters import Command
 from aiogram.types import Message, Document, InlineKeyboardButton, InlineKeyboardMarkup, CallbackQuery
 from aiogram.fsm.context import FSMContext
 from aiogram.fsm.state import State, StatesGroup
+from app.database.crud import get_client_by_user_id, update_client_type
+from app.database.db import async_session
 import logging
 
 router = Router()
@@ -129,3 +131,30 @@ async def cancel_reply(callback_query: CallbackQuery, state: FSMContext):
     await state.clear()
     await callback_query.message.answer("Ответ был отменен.")
     await callback_query.answer()
+
+
+class EditClientStates(StatesGroup):
+    waiting_for_client_id = State()
+    waiting_for_new_type = State()
+
+@router.message(EditClientStates.waiting_for_client_id)
+async def process_client_id(message: Message, state: FSMContext):
+    async with async_session() as session:
+        client = await get_client_by_user_id(session, int(message.text))
+        if client:
+            await state.update_data(client_id=client.id)
+            await message.answer("Введите новый тип клиента (organizer, individual):")
+            await state.set_state(EditClientStates.waiting_for_new_type)
+        else:
+            await message.answer("Клиент не найден. Попробуйте еще раз.")
+
+@router.message(EditClientStates.waiting_for_new_type)
+async def process_new_type(message: Message, state: FSMContext):
+    data = await state.get_data()
+    client_id = data.get("client_id")
+    new_type = message.text
+
+    async with async_session() as session:
+        await update_client_type(session, client_id, new_type)
+        await message.answer(f"Тип клиента успешно обновлен на {new_type}.")
+        await state.clear()
