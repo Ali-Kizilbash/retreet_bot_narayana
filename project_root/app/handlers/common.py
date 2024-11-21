@@ -1,14 +1,14 @@
 import os
 import aiohttp
 import logging
-from aiogram import Router, types
+from aiogram import Router, types 
 from aiogram.types import Message, CallbackQuery, FSInputFile
-from aiogram.filters import Command
-from config import Config, validate_config
-from app.utils.roles import OWNER_USERNAME, is_staff
+from aiogram.filters import Command 
+from config import Config, validate_config #валидатор конфига
+from app.utils.roles import OWNER_USERNAME, is_staff #Проверка на сотрудника
 from app.keyboards.admin_kb import get_admin_menu  # Админ-панель
-from app.keyboards.client_kb import get_two_column_keyboard, get_client_type_keyboard
-from app.database.crud import get_client_by_user_id, register_client, update_client_type
+from app.keyboards.client_kb import get_two_column_keyboard, get_client_type_keyboard #Клавиатуры
+from app.database.crud import get_client_by_user_id, register_client, update_client_type #CRUD
 from sqlalchemy.ext.asyncio import AsyncSession
 
 # Настройка логирования
