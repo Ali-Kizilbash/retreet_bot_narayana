@@ -5,11 +5,11 @@ from aiogram import Router, types
 from aiogram.types import Message, CallbackQuery, FSInputFile
 from aiogram.filters import Command
 from config import Config, validate_config
-# Удалите строки, связанные с базой данных
-# from app.database.crud import user_is_registered, register_user
-# from app.database.db import get_async_session
-from app.keyboards.client_kb import get_client_type_keyboard, get_two_column_keyboard
-from app.keyboards.admin_kb import get_admin_menu
+from app.utils.roles import OWNER_USERNAME, is_staff
+from app.keyboards.admin_kb import get_admin_menu  # Админ-панель
+from app.keyboards.client_kb import get_two_column_keyboard, get_client_type_keyboard
+from app.database.crud import get_client_by_user_id, register_client, update_client_type
+from sqlalchemy.ext.asyncio import AsyncSession
 
 # Настройка логирования
 logging.basicConfig(
@@ -28,249 +28,139 @@ except EnvironmentError as e:
     exit(1)
 
 router = Router()
-STAFF_USERNAMES_FILE = "staff_usernames.txt"
-OWNER_USERNAME = "@Veniamin_tk"
 
-def is_staff(username: str) -> bool:
-    """Проверяет, является ли пользователь сотрудником, сверяя его username с файлом staff_usernames.txt."""
-    print(f"Проверка на сотрудника для username: {username}")
-    if not os.path.exists(STAFF_USERNAMES_FILE):
-        print(f"Файл {STAFF_USERNAMES_FILE} не найден.")
-        return False
-
-    try:
-        with open(STAFF_USERNAMES_FILE, "r") as f:
-            staff_usernames = f.read().splitlines()
-            print(f"Загруженные сотрудники: {staff_usernames}")
-            return username in staff_usernames or username == OWNER_USERNAME
-    except FileNotFoundError:
-        print(f"Файл {STAFF_USERNAMES_FILE} не найден.")
-        return False
 
 def load_text(file_path):
     """Загружает текст из указанного файла."""
-    print(f"Загрузка текста из файла: {file_path}")
     if not os.path.exists(file_path):
-        print(f"Файл {file_path} не найден.")
+        logger.warning(f"Файл {file_path} не найден.")
         return "Файл не найден."
     try:
         with open(file_path, "r", encoding="utf-8") as file:
-            content = file.read()
-            print(f"Текст из {file_path} загружен успешно.")
-            return content
+            return file.read()
     except Exception as e:
-        print(f"Ошибка при загрузке текста из {file_path}: {e}")
+        logger.error(f"Ошибка при загрузке текста из {file_path}: {e}")
         return "Ошибка при загрузке файла."
 
-@router.message(Command("menu"))
-async def show_main_menu(message: Message):
-    """Обработчик для команды /menu, отправляет главное меню."""
-    await message.answer("Выберите действие из меню:", reply_markup=get_two_column_keyboard())
 
 @router.message(Command("start"))
-async def start_command(message: types.Message):
+async def start_command(message: Message, session: AsyncSession):
+    """Обработчик команды /start. Регистрирует нового клиента или приветствует существующего."""
+    user_id = message.from_user.id
     username = message.from_user.username
-    print(f"Команда /start получена от пользователя: {username}")
+    first_name = message.from_user.first_name
+    last_name = message.from_user.last_name or ""
 
-    if username == OWNER_USERNAME:
-        print("Показываем админ-панель владельцу.")
-        await message.answer("Харибол, многоуважаемый Вениамин! Добро пожаловать в ваш бот клиентской поддержки.")
-        await message.answer("Вот ваша админ-панель:", reply_markup=get_admin_menu())
-    elif username and is_staff(f"@{username}"):
-        print("Показываем админ-панель сотруднику.")
-        await message.answer("Добро пожаловать, сотрудник! Вот ваша админ-панель.")
+    logger.info(f"Команда /start от пользователя: {username} (ID: {user_id})")
+
+    # Проверка, является ли пользователь сотрудником
+    if is_staff(user_id=user_id, username=f"@{username}" if username else None):
+        if username == OWNER_USERNAME:
+            await message.answer("Харибол, многоуважаемый Вениамин! Добро пожаловать в ваш бот клиентской поддержки.")
+        else:
+            await message.answer("Добро пожаловать, сотрудник! Вот ваша админ-панель.")
         await message.answer("Выберите действие:", reply_markup=get_admin_menu())
+        return
+
+    # Проверяем в базе данных, зарегистрирован ли клиент
+    client = await get_client_by_user_id(session, user_id)
+
+    if client:
+        # Если клиент уже зарегистрирован
+        await message.answer(Config.ALREADY_REGISTERED_MESSAGE)
+        await message.answer("Выберите действие из меню:", reply_markup=get_two_column_keyboard())
     else:
-        # Уберите вызовы функций, завязанных на базу данных
+        # Регистрируем нового клиента
+        await register_client(session, user_id, first_name, last_name, client_type=None)
         await message.answer(Config.WELCOME_MESSAGE)
         await message.answer(
             "Приветствуем! Пожалуйста, выберите, кто вы:",
             reply_markup=get_client_type_keyboard()
         )
 
+
 @router.callback_query(lambda c: c.data and c.data.startswith("client_type:"))
-async def process_client_type(callback_query: CallbackQuery):
+async def process_client_type(callback_query: CallbackQuery, session: AsyncSession):
+    """Обработка выбора типа клиента."""
     client_type = callback_query.data.split(":")[1]
-    logger.info(f"Обработка выбора типа клиента: {client_type}")
+    user_id = callback_query.from_user.id
+    logger.info(f"Пользователь выбрал тип клиента: {client_type}")
 
     try:
+        # Обновляем тип клиента в базе данных
+        await update_client_type(session, user_id, client_type)
+
+        # Показываем меню в зависимости от выбранного типа
         if client_type == "organizer":
-            logger.info("Пользователь выбрал категорию: Организатор мероприятий.")
             await callback_query.message.answer(
                 "Вы выбрали категорию: Организатор мероприятий."
             )
             await callback_query.message.answer(
-                "Пожалуйста, выберите нужное меню:",
-                reply_markup=get_two_column_keyboard(is_organizer=True)  # Меню с доп. кнопками для организаторов
+                "Пожалуйста, выберите действие из меню:",
+                reply_markup=get_two_column_keyboard(is_organizer=True)
             )
         elif client_type == "individual":
-            logger.info("Пользователь выбрал категорию: Индивидуальный клиент.")
             await callback_query.message.answer(
                 "Вы выбрали категорию: Индивидуальный клиент."
             )
             await callback_query.message.answer(
-                "Пожалуйста, выберите нужное меню:",
-                reply_markup=get_two_column_keyboard()  # Меню для индивидуальных клиентов
+                "Пожалуйста, выберите действие из меню:",
+                reply_markup=get_two_column_keyboard()
             )
-
-        await callback_query.answer()  # Закрываем всплывающее уведомление
-        logger.info("Выбор типа клиента обработан успешно.")
+        await callback_query.answer()
     except Exception as e:
         logger.error(f"Ошибка при обработке выбора типа клиента: {e}")
+        await callback_query.message.answer("Произошла ошибка. Попробуйте снова.")
 
 
+@router.message(Command("menu"))
+async def show_main_menu(message: Message, session: AsyncSession):
+    """Обработчик команды /menu. Показывает меню в зависимости от роли пользователя."""
+    user_id = message.from_user.id
+    username = message.from_user.username
 
-@router.callback_query(lambda c: c.data == "organizer_guide")
-async def send_organizer_guide(callback_query: CallbackQuery):
-    # Немедленно отвечаем на callback-запрос
+    # Если пользователь сотрудник, показываем админ-панель
+    if is_staff(user_id=user_id, username=f"@{username}" if username else None):
+        await message.answer("Админ-панель:", reply_markup=get_admin_menu())
+        return
+
+    # Проверяем тип клиента в базе данных
+    client = await get_client_by_user_id(session, user_id)
+
+    if not client:
+        # Если клиент не найден в базе данных, предлагаем выбрать тип
+        await message.answer("Выберите, кто вы:", reply_markup=get_client_type_keyboard())
+        return
+
+    # Показываем соответствующее меню
+    if client.client_type == "organizer":
+        await message.answer(
+            "Меню организатора:", reply_markup=get_two_column_keyboard(is_organizer=True)
+        )
+    elif client.client_type == "individual":
+        await message.answer(
+            "Меню индивидуального клиента:", reply_markup=get_two_column_keyboard()
+        )
+
+
+@router.callback_query(lambda c: c.data == "weather")
+async def send_weather(callback_query: CallbackQuery):
+    """Отправка текущей погоды в Сочи."""
+    weather_info = await get_weather()
     await callback_query.answer()
-
-    pdf_path = os.path.abspath(Config.EVENT_ORGANIZER_GUIDE_FILE)
-    logger.info(f"Путь к PDF-файлу: {pdf_path}")
-
-    if not os.path.exists(pdf_path):
-        await callback_query.message.answer("Предложение для организаторов не найдено.")
-        logger.warning(f"Файл не найден по пути: {pdf_path}")
-    else:
-        try:
-            # Используем FSInputFile для отправки файла из файловой системы
-            pdf_file = FSInputFile(pdf_path)
-            await callback_query.bot.send_document(
-                chat_id=callback_query.from_user.id,
-                document=pdf_file,
-                caption="Вот предложение для организаторов мероприятий. Ознакомьтесь с условиями.")
-
-            logger.info("Файл успешно отправлен.")
-        except Exception as e:
-            logger.error(f"Ошибка при отправке руководства организатора: {e}")
-            await callback_query.message.answer("Произошла ошибка при отправке руководства организатора.")
+    await callback_query.message.answer(weather_info)
 
 
-
-@router.callback_query(lambda c: c.data == "rules")
-async def send_rules(callback_query: CallbackQuery):
-    rules_text = load_text("resources/rules.txt")  # Загружаем текст правил проживания
-    print("Отправка правил проживания.")
-    try:
-        await callback_query.message.answer(rules_text)
-        await callback_query.answer()
-        print("Правила проживания успешно отправлены.")
-    except Exception as e:
-        print(f"Ошибка при отправке правил проживания: {e}")
-
-
-@router.callback_query(lambda c: c.data == "directions")
-async def send_directions(callback_query: CallbackQuery):
-    directions_text = load_text("resources/directions.txt")  # Загружаем текст с инструкцией по прибытии
-    print("Отправка инструкции по прибытии.")
-    try:
-        await callback_query.message.answer(directions_text)
-        await callback_query.answer()
-        print("Инструкция по прибытии успешно отправлена.")
-    except Exception as e:
-        print(f"Ошибка при отправке инструкции по прибытии: {e}")
-
-
-# Функция для получения погоды
 async def get_weather():
+    """Получение текущей погоды в Сочи."""
     url = Config.WEATHER_API_URL
     async with aiohttp.ClientSession() as session:
         async with session.get(url) as response:
             if response.status == 200:
                 data = await response.json()
-                
-                # Получаем необходимые данные
                 temp = data["current_weather"]["temperature"]
                 windspeed = data["current_weather"]["windspeed"]
                 weather_code = data["current_weather"]["weathercode"]
-
-                # Преобразуем weathercode в описание на русском
                 weather_description_ru = Config.WEATHER_CODES.get(weather_code, "Неизвестная погода")
-
                 return f"Сейчас в Сочи: {temp}°C, {weather_description_ru}, скорость ветра: {windspeed} км/ч."
-            else:
-                return "Не удалось получить данные о погоде. Попробуйте позже."
-
-
-# Обработчик для кнопки "Узнать погоду"
-@router.callback_query(lambda c: c.data == "weather")
-async def send_weather(callback_query: CallbackQuery):
-    await callback_query.answer()  # Немедленно отвечаем на callback-запрос
-    weather_info = await get_weather()
-    await callback_query.message.answer(weather_info)
-
-
-async def send_links(callback_query: CallbackQuery, links):
-    """Отправка списка ссылок."""
-    message_text = ""
-    for link in links:
-        message_text += f"{link['name']}: [ссылка]({link['url']})\n"
-    
-    await callback_query.message.answer(message_text, parse_mode="Markdown")
-
-@router.callback_query(lambda c: c.data == "social_networks")
-async def send_social_networks(callback_query: CallbackQuery):
-    await callback_query.answer()
-    await send_links(callback_query, Config.LINKS["social_networks"])
-
-@router.callback_query(lambda c: c.data == "announcements")
-async def send_announcements(callback_query: CallbackQuery):
-    await callback_query.answer()
-    await send_links(callback_query, Config.LINKS["announcements"])
-
-@router.callback_query(lambda c: c.data == "maps")
-async def send_maps(callback_query: CallbackQuery):
-    await callback_query.answer()
-    await send_links(callback_query, Config.LINKS["maps"])
-
-@router.callback_query(lambda c: c.data == "contact_details")
-async def send_contact_details(callback_query: CallbackQuery):
-    await callback_query.answer()
-    await send_links(callback_query, Config.LINKS["contact_details"])
-
-@router.callback_query(lambda c: c.data == "website")
-async def send_website(callback_query: CallbackQuery):
-    await callback_query.answer()
-    await send_links(callback_query, Config.LINKS["website"])
-
-@router.callback_query(lambda c: c.data == "store")
-async def send_store(callback_query: CallbackQuery):
-    await callback_query.answer()
-    await send_links(callback_query, Config.LINKS["store"])
-
-@router.callback_query(lambda c: c.data == "organizer_chat")
-async def send_organizer_chat(callback_query: CallbackQuery):
-    await callback_query.answer()
-    await send_links(callback_query, Config.LINKS["organizer_chat"])
-
-@router.callback_query(lambda c: c.data == "video")
-async def send_video(callback_query: CallbackQuery):
-    await callback_query.answer()
-    await send_links(callback_query, Config.LINKS["video"])
-
-@router.callback_query(lambda c: c.data == "rules")
-async def send_rules(callback_query: CallbackQuery):
-    rules_text = load_text(Config.RULES_FILE)
-    await callback_query.answer()
-    await callback_query.message.answer(rules_text)
-
-@router.callback_query(lambda c: c.data == "directions")
-async def send_directions(callback_query: CallbackQuery):
-    directions_text = load_text(Config.DIRECTIONS_FILE)
-    await callback_query.answer()
-    await callback_query.message.answer(directions_text)
-
-@router.callback_query(lambda c: c.data == "organizer_guide")
-async def send_organizer_guide(callback_query: CallbackQuery):
-    await callback_query.answer()  # Немедленно отвечаем на callback-запрос
-
-    pdf_path = Config.EVENT_ORGANIZER_GUIDE_FILE
-    if not os.path.exists(pdf_path):
-        await callback_query.message.answer("Предложение для организаторов не найдено.")
-    else:
-        pdf_file = FSInputFile(pdf_path)
-        await callback_query.bot.send_document(
-            chat_id=callback_query.from_user.id,
-            document=pdf_file,
-            caption="Вот предложение для организаторов мероприятий. Ознакомьтесь с условиями."
-        )
+            return "Не удалось получить данные о погоде. Попробуйте позже."
