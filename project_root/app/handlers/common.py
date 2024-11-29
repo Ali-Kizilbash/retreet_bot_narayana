@@ -5,9 +5,8 @@ from aiogram import Router, types
 from aiogram.types import Message, CallbackQuery, FSInputFile
 from aiogram.filters import Command
 from config import Config, validate_config
-# Удалите строки, связанные с базой данных
-# from app.database.crud import user_is_registered, register_user
-# from app.database.db import get_async_session
+from app.database.crud import user_is_registered, register_user
+from app.database.db import get_async_session
 from app.keyboards.client_kb import get_client_type_keyboard, get_two_column_keyboard
 from app.keyboards.admin_kb import get_admin_menu
 
@@ -28,7 +27,7 @@ except EnvironmentError as e:
     exit(1)
 
 router = Router()
-STAFF_USERNAMES_FILE = "staff_usernames.txt"
+STAFF_USERNAMES_FILE = os.path.join("resources", "staff_usernames.txt")
 OWNER_USERNAME = "@Veniamin_tk"
 
 def is_staff(username: str) -> bool:

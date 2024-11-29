@@ -99,8 +99,8 @@ def validate_config():
     missing_vars = []
     if not Config.BOT_TOKEN:
         missing_vars.append("BOT_TOKEN")
-    '''if not Config.DATABASE_URL:
-        missing_vars.append("DATABASE_URL")'''
+    if not Config.DATABASE_URL:
+        missing_vars.append("DATABASE_URL")
 
     if missing_vars:
         raise EnvironmentError(f"Отсутствуют необходимые переменные окружения: {', '.join(missing_vars)}")
