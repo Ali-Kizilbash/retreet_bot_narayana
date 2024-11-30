@@ -3,6 +3,7 @@ from aiogram.filters import Command
 from aiogram.types import Message
 from config import Config
 from app.keyboards.client_kb import get_two_column_keyboard
+from app.handlers.common import user_status
 
 
 router = Router()
@@ -21,6 +22,11 @@ async def website_command_handler(message: Message):
 
 @router.message(Command("menu"))
 async def show_main_menu(message: Message):
-    """Обработчик для команды /menu, отправляет главное меню."""
-    await message.answer("Выберите действие из меню:",
-                         reply_markup=get_two_column_keyboard())
+    """Обработчик для команды /menu, отправляет главное меню в зависимости от статуса пользователя."""
+    user_id = message.from_user.id
+    is_organizer = user_status.get(user_id) == "organizer"  # Проверяем статус пользователя
+
+    await message.answer(
+        "Выберите действие из меню:",
+        reply_markup=get_two_column_keyboard(is_organizer=is_organizer)
+    )

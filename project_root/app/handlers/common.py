@@ -10,6 +10,7 @@ from app.database.db import get_async_session
 from app.keyboards.client_kb import get_client_type_keyboard, get_two_column_keyboard
 from app.keyboards.admin_kb import get_admin_menu
 from app.keyboards.set_commands import set_bot_commands
+from aiogram.fsm.context import FSMContext
 
 # Настройка логирования
 logging.basicConfig(
@@ -93,24 +94,32 @@ async def start_command(message: Message, bot: Bot):
     # Устанавливаем команды только для текущего пользователя
     await set_bot_commands(bot, is_admin=is_admin, user_id=user_id)
 
+# Хранилище статусов пользователя (временное)
+user_status = {}
 
 @router.callback_query(lambda c: c.data and c.data.startswith("client_type:"))
 async def process_client_type(callback_query: CallbackQuery):
+    """
+    Обрабатывает выбор типа клиента (организатор или индивидуальный клиент) и сохраняет статус пользователя.
+    """
     client_type = callback_query.data.split(":")[1]
-    logger.info(f"Обработка выбора типа клиента: {client_type}")
+    user_id = callback_query.from_user.id  # Идентификатор пользователя
+    logger.info(f"Обработка выбора типа клиента: {client_type} для пользователя {user_id}")
 
     try:
         if client_type == "organizer":
             logger.info("Пользователь выбрал категорию: Организатор мероприятий.")
+            user_status[user_id] = "organizer"  # Сохраняем статус пользователя
             await callback_query.message.answer(
                 "Вы выбрали категорию: Организатор мероприятий."
             )
             await callback_query.message.answer(
                 "Пожалуйста, выберите нужное меню:",
-                reply_markup=get_two_column_keyboard(is_organizer=True)  # Меню с доп. кнопками для организаторов
+                reply_markup=get_two_column_keyboard(is_organizer=True)  # Меню с кнопками для организаторов
             )
         elif client_type == "individual":
             logger.info("Пользователь выбрал категорию: Индивидуальный клиент.")
+            user_status[user_id] = "individual"  # Сохраняем статус пользователя
             await callback_query.message.answer(
                 "Вы выбрали категорию: Индивидуальный клиент."
             )
@@ -120,10 +129,9 @@ async def process_client_type(callback_query: CallbackQuery):
             )
 
         await callback_query.answer()  # Закрываем всплывающее уведомление
-        logger.info("Выбор типа клиента обработан успешно.")
+        logger.info(f"Выбор типа клиента обработан успешно для пользователя {user_id}. Статус: {client_type}")
     except Exception as e:
-        logger.error(f"Ошибка при обработке выбора типа клиента: {e}")
-
+        logger.error(f"Ошибка при обработке выбора типа клиента для пользователя {user_id}: {e}")
 
 
 @router.callback_query(lambda c: c.data == "organizer_guide")
