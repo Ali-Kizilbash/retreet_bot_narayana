@@ -1,7 +1,7 @@
 import os
 import aiohttp
 import logging
-from aiogram import Router, types
+from aiogram import Router, types, Bot
 from aiogram.types import Message, CallbackQuery, FSInputFile
 from aiogram.filters import Command
 from config import Config, validate_config
@@ -9,6 +9,7 @@ from app.database.crud import user_is_registered, register_user
 from app.database.db import get_async_session
 from app.keyboards.client_kb import get_client_type_keyboard, get_two_column_keyboard
 from app.keyboards.admin_kb import get_admin_menu
+from app.keyboards.set_commands import set_bot_commands
 
 # Настройка логирования
 logging.basicConfig(
@@ -30,6 +31,7 @@ router = Router()
 STAFF_USERNAMES_FILE = os.path.join("resources", "staff_usernames.txt")
 OWNER_USERNAME = "@Veniamin_tk"
 
+
 def is_staff(username: str) -> bool:
     """Проверяет, является ли пользователь сотрудником, сверяя его username с файлом staff_usernames.txt."""
     print(f"Проверка на сотрудника для username: {username}")
@@ -46,6 +48,7 @@ def is_staff(username: str) -> bool:
         print(f"Файл {STAFF_USERNAMES_FILE} не найден.")
         return False
 
+
 def load_text(file_path):
     """Загружает текст из указанного файла."""
     print(f"Загрузка текста из файла: {file_path}")
@@ -61,31 +64,33 @@ def load_text(file_path):
         print(f"Ошибка при загрузке текста из {file_path}: {e}")
         return "Ошибка при загрузке файла."
 
-@router.message(Command("menu"))
-async def show_main_menu(message: Message):
-    """Обработчик для команды /menu, отправляет главное меню."""
-    await message.answer("Выберите действие из меню:", reply_markup=get_two_column_keyboard())
 
 @router.message(Command("start"))
-async def start_command(message: types.Message):
+async def start_command(message: Message, bot: Bot):
     username = message.from_user.username
     print(f"Команда /start получена от пользователя: {username}")
+
+    is_admin = False  # Флаг для проверки прав пользователя
 
     if username == OWNER_USERNAME:
         print("Показываем админ-панель владельцу.")
         await message.answer("Харибол, многоуважаемый Вениамин! Добро пожаловать в ваш бот клиентской поддержки.")
         await message.answer("Вот ваша админ-панель:", reply_markup=get_admin_menu())
+        is_admin = True
     elif username and is_staff(f"@{username}"):
         print("Показываем админ-панель сотруднику.")
         await message.answer("Добро пожаловать, сотрудник! Вот ваша админ-панель.")
         await message.answer("Выберите действие:", reply_markup=get_admin_menu())
+        is_admin = True
     else:
-        # Уберите вызовы функций, завязанных на базу данных
         await message.answer(Config.WELCOME_MESSAGE)
         await message.answer(
             "Приветствуем! Пожалуйста, выберите, кто вы:",
             reply_markup=get_client_type_keyboard()
         )
+
+    # Устанавливаем команды в зависимости от статуса
+    await set_bot_commands(bot, is_admin=is_admin)
 
 @router.callback_query(lambda c: c.data and c.data.startswith("client_type:"))
 async def process_client_type(callback_query: CallbackQuery):
