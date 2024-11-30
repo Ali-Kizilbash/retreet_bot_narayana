@@ -6,6 +6,7 @@ import os
 # Загрузка переменных окружения
 load_dotenv()
 
+
 class Config:
     # Токен и URL базы данных
     BOT_TOKEN = os.getenv("BOT_TOKEN", "").strip()

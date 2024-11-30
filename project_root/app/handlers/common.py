@@ -33,20 +33,46 @@ STAFF_USERNAMES_FILE = os.path.join("resources", "staff_usernames.txt")
 OWNER_USERNAME = "@Veniamin_tk"
 
 
-def is_staff(username: str) -> bool:
-    """Проверяет, является ли пользователь сотрудником, сверяя его username с файлом staff_usernames.txt."""
-    print(f"Проверка на сотрудника для username: {username}")
-    if not os.path.exists(STAFF_USERNAMES_FILE):
-        print(f"Файл {STAFF_USERNAMES_FILE} не найден.")
+def is_staff(user_id: int = None, username: str = None) -> bool:
+    """
+    Проверяет, является ли пользователь сотрудником, сверяя его ID и/или username с файлом staff_usernames.txt.
+    Хотя бы один из параметров (user_id или username) должен быть указан.
+    """
+    if not user_id and not username:
+        print("Ошибка: Не указан ни ID, ни username.")
+        return False
+
+    print(f"Проверка на сотрудника для ID: {user_id}, username: {username}")
+
+    # Проверяем наличие файла
+    if not os.path.exists(Config.STAFF_USERNAMES_FILE):
+        print(f"Файл {Config.STAFF_USERNAMES_FILE} не найден.")
         return False
 
     try:
-        with open(STAFF_USERNAMES_FILE, "r") as f:
-            staff_usernames = f.read().splitlines()
-            print(f"Загруженные сотрудники: {staff_usernames}")
-            return username in staff_usernames or username == OWNER_USERNAME
+        # Загружаем данные из файла
+        with open(Config.STAFF_USERNAMES_FILE, "r", encoding="utf-8") as f:
+            staff_entries = f.read().splitlines()
+        
+        print(f"Загруженные сотрудники: {staff_entries}")
+
+        # Проверяем наличие ID и/или username в файле
+        for entry in staff_entries:
+            entry_data = entry.split()
+            entry_id = entry_data[0]  # ID из файла
+            entry_username = entry_data[1] if len(entry_data) > 1 else None  # username из файла (если указан)
+
+            if (user_id and str(user_id) == entry_id) or (username and username == entry_username):
+                return True
+
+        # Если совпадений нет
+        return False
+
     except FileNotFoundError:
-        print(f"Файл {STAFF_USERNAMES_FILE} не найден.")
+        print(f"Файл {Config.STAFF_USERNAMES_FILE} не найден.")
+        return False
+    except Exception as e:
+        print(f"Ошибка при проверке сотрудника: {e}")
         return False
 
 

@@ -1,6 +1,10 @@
+import os
 from aiogram import Router, types, F
 from aiogram.types import Message, Document
 from aiogram.filters import Command
+from config import Config
+from app.handlers.common import is_staff
+
 import logging
 
 router = Router()
@@ -14,13 +18,35 @@ ALLOWED_EXTENSIONS = {"txt", "doc", "pdf", "epub", "fb2"}
 
 @router.message(Command("broadcast"))
 async def broadcast_command_handler(message: Message):
-    """Команда для начала рассылки, запрашивает текст или документ для рассылки."""
+    """
+    Команда для начала рассылки, доступна только сотрудникам или владельцу.
+    """
+    user_id = message.from_user.id
+    username = f"@{message.from_user.username}" if message.from_user.username else ""
+
+    # Проверяем, является ли пользователь сотрудником
+    if not is_staff(user_id=user_id, username=username):
+        await message.answer("У вас нет прав на выполнение этой команды.")
+        return
+
+    # Если пользователь сотрудник, даём инструкции для рассылки
     await message.answer("Пожалуйста, отправьте текстовое сообщение и/или документ для рассылки.")
+
 
 @router.message(F.content_type.in_([types.ContentType.TEXT, types.ContentType.DOCUMENT]))
 async def handle_broadcast(message: Message):
-    """Обработчик для рассылки текстов и/или документов."""
-    
+    """
+    Обработчик для рассылки текстов и/или документов, доступен только сотрудникам.
+    """
+    user_id = message.from_user.id
+    username = f"@{message.from_user.username}" if message.from_user.username else ""
+
+    # Проверяем, является ли пользователь сотрудником
+    if not is_staff(user_id=user_id, username=username):
+        logger.warning(f"Пользователь {user_id} ({username}) пытался инициировать рассылку без прав.")
+        await message.answer("У вас нет прав на выполнение этой операции.")
+        return
+
     # Проверка и рассылка текстового сообщения
     if message.content_type == types.ContentType.TEXT:
         text = message.text
@@ -47,9 +73,5 @@ async def handle_broadcast(message: Message):
                 logger.info(f"Документ {document.file_name} отправлен пользователю {user_id}")
             except Exception as e:
                 logger.error(f"Не удалось отправить документ пользователю {user_id}: {e}")
-
-    # Если ни текст, ни документ не были отправлены, информируем об этом
-    if message.content_type not in [types.ContentType.TEXT, types.ContentType.DOCUMENT]:
-        await message.answer("Пожалуйста, отправьте либо текст, либо документ для рассылки.")
 
     await message.answer("Рассылка завершена.")
