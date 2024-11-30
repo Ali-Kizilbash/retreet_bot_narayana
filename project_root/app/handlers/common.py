@@ -68,7 +68,8 @@ def load_text(file_path):
 @router.message(Command("start"))
 async def start_command(message: Message, bot: Bot):
     username = message.from_user.username
-    print(f"Команда /start получена от пользователя: {username}")
+    user_id = message.from_user.id
+    print(f"Команда /start получена от пользователя: {username} (user_id: {user_id})")
 
     is_admin = False  # Флаг для проверки прав пользователя
 
@@ -89,8 +90,9 @@ async def start_command(message: Message, bot: Bot):
             reply_markup=get_client_type_keyboard()
         )
 
-    # Устанавливаем команды в зависимости от статуса
-    await set_bot_commands(bot, is_admin=is_admin)
+    # Устанавливаем команды только для текущего пользователя
+    await set_bot_commands(bot, is_admin=is_admin, user_id=user_id)
+
 
 @router.callback_query(lambda c: c.data and c.data.startswith("client_type:"))
 async def process_client_type(callback_query: CallbackQuery):
@@ -227,10 +229,27 @@ async def send_maps(callback_query: CallbackQuery):
     await callback_query.answer()
     await send_links(callback_query, Config.LINKS["maps"])
 
+async def send_contact_details_from_config(callback_query: CallbackQuery):
+    """Отправляет контакты из Config.LINKS['contact_details'], включая текстовые и ссылочные данные."""
+    contact_details = Config.LINKS["contact_details"]
+    message_text = "Наши контакты:\n\n"
+
+    for contact in contact_details:
+        if "name" in contact and "url" in contact:
+            # Если это ссылка
+            message_text += f"{contact['name']}: [ссылка]({contact['url']})\n"
+        elif "text" in contact:
+            # Если это текст
+            message_text += f"{contact['text']}\n"
+
+    await callback_query.message.answer(message_text, parse_mode="Markdown")
+
 @router.callback_query(lambda c: c.data == "contact_details")
 async def send_contact_details(callback_query: CallbackQuery):
-    await callback_query.answer()
-    await send_links(callback_query, Config.LINKS["contact_details"])
+    """Обрабатывает отправку контактных данных."""
+    await callback_query.answer()  # Немедленно отвечаем на callback-запрос
+    await send_contact_details_from_config(callback_query)
+
 
 @router.callback_query(lambda c: c.data == "website")
 async def send_website(callback_query: CallbackQuery):

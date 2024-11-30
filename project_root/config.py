@@ -75,7 +75,9 @@ class Config:
             {"name": "2Гис", "url": "https://2gis.ru/sochi/firm/70000001049866178?m=39.607907%2C43.680824%2F16"}
         ],
         "contact_details": [
-            {"name": "Почта", "url": "mailto:info@narayana.center"}
+            {"text": "Почта — info@narayana.center"},
+            {"text": "+7(910)000-39-00 — Бронирование номеров"},
+            {"text": "+7(939)777-36-77 — Организаторам"}
         ],
         "website": [
             {"name": "Наш сайт", "url": "https://narayana.center"},
