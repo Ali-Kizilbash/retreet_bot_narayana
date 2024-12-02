@@ -5,7 +5,7 @@ from aiogram import Router, types, Bot
 from aiogram.types import Message, CallbackQuery, FSInputFile
 from aiogram.filters import Command
 from config import Config, validate_config
-from app.database.crud import user_is_registered, register_user
+from app.database.crud import user_is_registered
 from app.database.db import get_async_session
 from app.keyboards.client_kb import get_client_type_keyboard, get_two_column_keyboard
 from app.keyboards.admin_kb import get_admin_menu
@@ -36,44 +36,61 @@ OWNER_USERNAME = "@Veniamin_tk"
 def is_staff(user_id: int = None, username: str = None) -> bool:
     """
     Проверяет, является ли пользователь сотрудником, сверяя его ID и/или username с файлом staff_usernames.txt.
-    Хотя бы один из параметров (user_id или username) должен быть указан.
     """
-    if not user_id and not username:
-        print("Ошибка: Не указан ни ID, ни username.")
-        return False
+    logger.debug(f"Проверяем пользователя: user_id={user_id}, username={username}")
 
-    print(f"Проверка на сотрудника для ID: {user_id}, username: {username}")
+    if not user_id and not username:
+        logger.warning("Ошибка: Не указан ни ID, ни username.")
+        return False
 
     # Проверяем наличие файла
     if not os.path.exists(Config.STAFF_USERNAMES_FILE):
-        print(f"Файл {Config.STAFF_USERNAMES_FILE} не найден.")
+        logger.error(f"Файл {Config.STAFF_USERNAMES_FILE} не найден.")
         return False
 
     try:
         # Загружаем данные из файла
         with open(Config.STAFF_USERNAMES_FILE, "r", encoding="utf-8") as f:
             staff_entries = f.read().splitlines()
-        
-        print(f"Загруженные сотрудники: {staff_entries}")
 
-        # Проверяем наличие ID и/или username в файле
+        logger.debug(f"Список сотрудников: {staff_entries}")
+
+        # Проверяем каждую запись
         for entry in staff_entries:
-            entry_data = entry.split()
-            entry_id = entry_data[0]  # ID из файла
-            entry_username = entry_data[1] if len(entry_data) > 1 else None  # username из файла (если указан)
+            entry_parts = entry.split()  # Разделяем строку по пробелам
+            entry_id = None
+            entry_username = None
 
+            if len(entry_parts) == 2:
+                # Если две части, определяем ID и username
+                if entry_parts[0].startswith("@"):
+                    entry_username = entry_parts[0]
+                    entry_id = entry_parts[1]
+                else:
+                    entry_id = entry_parts[0]
+                    entry_username = entry_parts[1]
+            elif len(entry_parts) == 1:
+                # Если только одна часть, определяем ID или username
+                if entry_parts[0].startswith("@"):
+                    entry_username = entry_parts[0]
+                else:
+                    entry_id = entry_parts[0]
+
+            logger.debug(f"Проверяем запись: entry_id={entry_id}, entry_username={entry_username}")
+
+            # Проверяем совпадение ID или username
             if (user_id and str(user_id) == entry_id) or (username and username == entry_username):
+                logger.info(f"Пользователь {user_id} ({username}) найден в списке сотрудников.")
                 return True
 
-        # Если совпадений нет
+        logger.warning(f"Пользователь {user_id} ({username}) не найден в списке сотрудников.")
         return False
 
-    except FileNotFoundError:
-        print(f"Файл {Config.STAFF_USERNAMES_FILE} не найден.")
-        return False
     except Exception as e:
-        print(f"Ошибка при проверке сотрудника: {e}")
+        logger.error(f"Ошибка при проверке сотрудника: {e}")
         return False
+
+
 
 
 def load_text(file_path):
@@ -96,29 +113,48 @@ def load_text(file_path):
 async def start_command(message: Message, bot: Bot):
     username = message.from_user.username
     user_id = message.from_user.id
-    print(f"Команда /start получена от пользователя: {username} (user_id: {user_id})")
 
-    is_admin = False  # Флаг для проверки прав пользователя
+    # Логируем базовую информацию о пользователе
+    logger.info(f"Команда /start получена от пользователя: {username} (user_id: {user_id})")
+    logger.debug(f"Детали пользователя: {message.from_user}")
 
+    # Проверяем владельца
     if username == OWNER_USERNAME:
-        print("Показываем админ-панель владельцу.")
+        logger.info(f"Пользователь {username} (user_id: {user_id}) идентифицирован как владелец.")
         await message.answer("Харибол, многоуважаемый Вениамин! Добро пожаловать в ваш бот клиентской поддержки.")
         await message.answer("Вот ваша админ-панель:", reply_markup=get_admin_menu())
+        await set_bot_commands(bot, is_admin=True, user_id=user_id)
+        return
+
+    # Проверяем права сотрудника (админа)
+    is_admin = False  # Флаг для проверки прав
+    if username and is_staff(username=username):
+        logger.info(f"Пользователь {username} (user_id: {user_id}) идентифицирован как сотрудник (по username).")
         is_admin = True
-    elif username and is_staff(f"@{username}"):
-        print("Показываем админ-панель сотруднику.")
-        await message.answer("Добро пожаловать, сотрудник! Вот ваша админ-панель.")
-        await message.answer("Выберите действие:", reply_markup=get_admin_menu())
+    elif is_staff(user_id=user_id):
+        logger.info(f"Пользователь {username} (user_id: {user_id}) идентифицирован как сотрудник (по user_id).")
         is_admin = True
     else:
+        logger.warning(f"Пользователь {username} (user_id: {user_id}) не найден в списке сотрудников.")
+
+    # Показ админ-панели или клиентского меню
+    if is_admin:
+        logger.info(f"Пользователю {username} (user_id: {user_id}) будет показано админ-меню.")
+        await message.answer("Добро пожаловать, сотрудник! Вот ваша админ-панель.")
+        await message.answer("Выберите действие:", reply_markup=get_admin_menu())
+        await set_bot_commands(bot, is_admin=True, user_id=user_id)
+    else:
+        logger.info(f"Пользователю {username} (user_id: {user_id}) будет показано клиентское меню.")
         await message.answer(Config.WELCOME_MESSAGE)
         await message.answer(
             "Приветствуем! Пожалуйста, выберите, кто вы:",
             reply_markup=get_client_type_keyboard()
         )
+        await set_bot_commands(bot, is_admin=False, user_id=user_id)
 
-    # Устанавливаем команды только для текущего пользователя
-    await set_bot_commands(bot, is_admin=is_admin, user_id=user_id)
+    # Логируем результат
+    logger.debug(f"Результат обработки /start для пользователя {username} (user_id: {user_id}): {'Админ' if is_admin else 'Клиент'}")
+
 
 # Хранилище статусов пользователя (временное)
 user_status = {}
@@ -218,7 +254,7 @@ async def get_weather():
         async with session.get(url) as response:
             if response.status == 200:
                 data = await response.json()
-                
+
                 # Получаем необходимые данные
                 temp = data["current_weather"]["temperature"]
                 windspeed = data["current_weather"]["windspeed"]
@@ -245,7 +281,7 @@ async def send_links(callback_query: CallbackQuery, links):
     message_text = ""
     for link in links:
         message_text += f"{link['name']}: [ссылка]({link['url']})\n"
-    
+
     await callback_query.message.answer(message_text, parse_mode="Markdown")
 
 @router.callback_query(lambda c: c.data == "social_networks")

@@ -38,9 +38,12 @@ def get_subscriber_stats_menu():
         print("Создание клавиатуры статистики подписчиков.")
         keyboard = InlineKeyboardMarkup(inline_keyboard=[
             [InlineKeyboardButton(text="Текущие подписчики", callback_data="current_subscribers")],
-            [InlineKeyboardButton(text="Подписки за день", callback_data="daily_growth")],
+            [InlineKeyboardButton(text="Подписки за сегодня", callback_data="daily_growth")],
+            [InlineKeyboardButton(text="Подписки за неделю", callback_data="weekly_growth")],
             [InlineKeyboardButton(text="Подписки за месяц", callback_data="monthly_growth")],
-            [InlineKeyboardButton(text="Пользовательский диапазон", callback_data="custom_range")]
+            [InlineKeyboardButton(text="Подписки за квартал", callback_data="quarterly_growth")],
+            [InlineKeyboardButton(text="Подписки за полгода", callback_data="half_year_growth")],
+            [InlineKeyboardButton(text="Подписки за год", callback_data="yearly_growth")]
         ])
         print("Клавиатура статистики подписчиков создана успешно.")
         return keyboard

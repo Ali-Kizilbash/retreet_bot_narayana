@@ -1,36 +1,89 @@
-from app.database.models import User  # Модель пользователя, которая должна быть определена
-from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
+from sqlalchemy.ext.asyncio import AsyncSession
+from app.database.models import User
+from datetime import datetime, timedelta
 
-# Условие для тестирования
-TESTING = True  # Поставьте False, когда хотите снова подключить базу данных
+async def add_user(user_id: int, name: str, username: str, client_type: str, session: AsyncSession):
+    """
+    Добавляет нового пользователя в базу данных.
+    """
+    new_user = User(
+        id=user_id,
+        name=name,
+        username=username,
+        client_type=client_type
+    )
+    session.add(new_user)
+    await session.commit()
+    print(f"Пользователь {user_id} добавлен в базу данных.")
+
+
+async def update_user_type(user_id: int, client_type: str, session: AsyncSession):
+    """
+    Обновляет тип клиента в базе данных.
+    """
+    result = await session.execute(select(User).where(User.id == user_id))
+    user = result.scalar_one_or_none()
+    if user:
+        user.client_type = client_type
+        await session.commit()
+        print(f"Тип клиента пользователя {user_id} обновлён на {client_type}.")
+    else:
+        print(f"Пользователь {user_id} не найден в базе данных.")
+
+
+async def get_user(user_id: int, session: AsyncSession):
+    """
+    Возвращает пользователя из базы данных.
+    """
+    result = await session.execute(select(User).where(User.id == user_id))
+    return result.scalar_one_or_none()
 
 
 async def user_is_registered(user_id: int, session: AsyncSession) -> bool:
-    """Проверяет, зарегистрирован ли пользователь."""
-    if TESTING:
-        print(f"Тестовый режим: проверка регистрации пользователя {user_id}")
-        return False  # Предположим, что пользователь не зарегистрирован
-    result = await session.execute(select(User).filter_by(id=user_id))
+    """
+    Проверяет, зарегистрирован ли пользователь в базе данных.
+    """
+    result = await session.execute(select(User).where(User.id == user_id))
     return result.scalar_one_or_none() is not None
 
 
-async def register_user(user_id: int, session: AsyncSession):
-    """Регистрирует нового пользователя."""
-    if TESTING:
-        print(f"Тестовый режим: регистрация пользователя {user_id}")
-        return  # Пропускаем добавление пользователя в базу
-    new_user = User(id=user_id)
-    session.add(new_user)
-    await session.commit()
+async def get_subscriber_stats(period: str, session: AsyncSession):
+    """
+    Возвращает количество подписчиков за указанный период.
+    - period: "today", "week", "month", "quarter", "half_year", "year", "all".
+    """
+    now = datetime.utcnow()
 
+    if period == "today":
+        # Подписчики за сегодня
+        start_date = now.replace(hour=0, minute=0, second=0, microsecond=0)
+    elif period == "week":
+        # Подписчики за последнюю неделю
+        start_date = now - timedelta(days=7)
+    elif period == "month":
+        # Подписчики за последний месяц
+        start_date = now.replace(day=1)
+    elif period == "quarter":
+        # Подписчики за последний квартал (3 месяца)
+        start_month = (now.month - 1) // 3 * 3 + 1
+        start_date = now.replace(month=start_month, day=1)
+    elif period == "half_year":
+        # Подписчики за последние 6 месяцев
+        start_month = (now.month - 1) // 6 * 6 + 1
+        start_date = now.replace(month=start_month, day=1)
+    elif period == "year":
+        # Подписчики за последний год
+        start_date = now.replace(month=1, day=1)
+    elif period == "all":
+        # Общее количество подписчиков (все пользователи)
+        result = await session.execute(select(User))
+        return len(result.scalars().all())
+    else:
+        raise ValueError("Invalid period specified. Use 'today', 'week', 'month', 'quarter', 'half_year', 'year', or 'all'.")
 
-async def get_subscriber_stats():
-    # Заглушка для функции, которая должна возвращать статистику подписчиков
-    # Временно возвращаем фиктивные данные для тестирования
-    print("Тестовый вызов функции get_subscriber_stats")
-    return {
-        "total_subscribers": 0,
-        "active_subscribers": 0
-    }
-
+    # Запрос на выборку подписчиков за указанный период
+    result = await session.execute(
+        select(User).where(User.date_joined >= start_date)
+    )
+    return len(result.scalars().all())

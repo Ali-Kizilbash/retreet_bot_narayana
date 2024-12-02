@@ -6,7 +6,8 @@ from app.keyboards.admin_kb import (get_admin_menu,
                                     get_file_management_menu,
                                     get_subscriber_stats_menu
 )
-from app.database.crud import get_subscriber_stats  # Функция для получения статистики
+from app.database.crud import get_subscriber_stats # Функция для получения статистики
+from app.database.db import get_async_session
 import logging
 
 router = Router()
@@ -54,63 +55,111 @@ async def view_files(callback_query: CallbackQuery):
     except Exception as e:
         print(f"Ошибка при отображении списка файлов: {e}")
 
-@router.callback_query(lambda c: c.data == "subscriber_stats")
-async def subscriber_stats(callback_query: CallbackQuery):
-    """Показывает меню для просмотра статистики подписчиков."""
-    print("Вызвано меню статистики подписчиков.")
-    try:
-        await callback_query.message.answer("Статистика подписчиков:", reply_markup=get_subscriber_stats_menu())
-        await callback_query.answer()
-        print("Меню статистики подписчиков успешно отображено.")
-    except Exception as e:
-        print(f"Ошибка при отображении меню статистики подписчиков: {e}")
 
 @router.callback_query(lambda c: c.data == "current_subscribers")
 async def current_subscribers(callback_query: CallbackQuery):
-    """Показывает текущее количество подписчиков."""
-    print("Запрос текущего количества подписчиков.")
+    """Показывает общее количество подписчиков."""
+    print(f"Обработчик вызван: {callback_query.data}")
+    print("Запрос общего количества подписчиков.")
     try:
-        subscriber_count = await get_subscriber_stats("current")
-        await callback_query.message.answer(f"Текущее количество подписчиков: {subscriber_count}")
+        async with get_async_session() as session:
+            subscriber_count = await get_subscriber_stats("all", session)
+        await callback_query.message.answer(f"Общее количество подписчиков: {subscriber_count}")
         await callback_query.answer()
-        print(f"Текущее количество подписчиков: {subscriber_count}")
+        print(f"Общее количество подписчиков: {subscriber_count}")
     except Exception as e:
-        print(f"Ошибка при получении текущего количества подписчиков: {e}")
+        print(f"Ошибка при получении общего количества подписчиков: {e}")
+
 
 @router.callback_query(lambda c: c.data == "daily_growth")
 async def daily_growth(callback_query: CallbackQuery):
     """Показывает количество подписок за день."""
+    print(f"Обработчик вызван: {callback_query.data}")
     print("Запрос количества подписок за день.")
     try:
-        today_count = await get_subscriber_stats("daily")
+        async with get_async_session() as session:
+            today_count = await get_subscriber_stats("today", session)
         await callback_query.message.answer(f"Подписки за сегодня: {today_count}")
         await callback_query.answer()
         print(f"Количество подписок за день: {today_count}")
     except Exception as e:
         print(f"Ошибка при получении количества подписок за день: {e}")
 
+
 @router.callback_query(lambda c: c.data == "monthly_growth")
 async def monthly_growth(callback_query: CallbackQuery):
     """Показывает количество подписок за месяц."""
+    print(f"Обработчик вызван: {callback_query.data}")
     print("Запрос количества подписок за месяц.")
     try:
-        monthly_count = await get_subscriber_stats("monthly")
+        async with get_async_session() as session:
+            monthly_count = await get_subscriber_stats("month", session)
         await callback_query.message.answer(f"Подписки за последний месяц: {monthly_count}")
         await callback_query.answer()
-        print(f"Количество подписок за последний месяц: {monthly_count}")
+        print(f"Количество подписок за месяц: {monthly_count}")
     except Exception as e:
         print(f"Ошибка при получении количества подписок за месяц: {e}")
 
-@router.callback_query(lambda c: c.data == "custom_range")
-async def custom_range(callback_query: CallbackQuery):
-    """Запрос временного диапазона для статистики подписчиков."""
-    print("Запрос пользовательского диапазона для статистики подписчиков.")
+
+@router.callback_query(lambda c: c.data == "weekly_growth")
+async def weekly_growth(callback_query: CallbackQuery):
+    """Показывает количество подписок за неделю."""
+    print(f"Обработчик вызван: {callback_query.data}")
+    print("Запрос количества подписок за неделю.")
     try:
-        await callback_query.message.answer("Функционал выбора пользовательского диапазона пока в разработке.")
+        async with get_async_session() as session:
+            weekly_count = await get_subscriber_stats("week", session)
+        await callback_query.message.answer(f"Подписки за последнюю неделю: {weekly_count}")
         await callback_query.answer()
-        print("Уведомление о разработке функции пользовательского диапазона отправлено.")
+        print(f"Количество подписок за неделю: {weekly_count}")
     except Exception as e:
-        print(f"Ошибка при обработке пользовательского диапазона: {e}")
+        print(f"Ошибка при получении количества подписок за неделю: {e}")
+
+
+@router.callback_query(lambda c: c.data == "quarterly_growth")
+async def quarterly_growth(callback_query: CallbackQuery):
+    """Показывает количество подписок за квартал."""
+    print(f"Обработчик вызван: {callback_query.data}")
+    print("Запрос количества подписок за квартал.")
+    try:
+        async with get_async_session() as session:
+            quarterly_count = await get_subscriber_stats("quarter", session)
+        await callback_query.message.answer(f"Подписки за последний квартал: {quarterly_count}")
+        await callback_query.answer()
+        print(f"Количество подписок за квартал: {quarterly_count}")
+    except Exception as e:
+        print(f"Ошибка при получении количества подписок за квартал: {e}")
+
+
+@router.callback_query(lambda c: c.data == "half_year_growth")
+async def half_year_growth(callback_query: CallbackQuery):
+    """Показывает количество подписок за полгода."""
+    print(f"Обработчик вызван: {callback_query.data}")
+    print("Запрос количества подписок за полгода.")
+    try:
+        async with get_async_session() as session:
+            half_year_count = await get_subscriber_stats("half_year", session)
+        await callback_query.message.answer(f"Подписки за последние полгода: {half_year_count}")
+        await callback_query.answer()
+        print(f"Количество подписок за полгода: {half_year_count}")
+    except Exception as e:
+        print(f"Ошибка при получении количества подписок за полгода: {e}")
+
+
+@router.callback_query(lambda c: c.data == "yearly_growth")
+async def yearly_growth(callback_query: CallbackQuery):
+    """Показывает количество подписок за год."""
+    print(f"Обработчик вызван: {callback_query.data}")
+    print("Запрос количества подписок за год.")
+    try:
+        async with get_async_session() as session:
+            yearly_count = await get_subscriber_stats("year", session)
+        await callback_query.message.answer(f"Подписки за последний год: {yearly_count}")
+        await callback_query.answer()
+        print(f"Количество подписок за год: {yearly_count}")
+    except Exception as e:
+        print(f"Ошибка при получении количества подписок за год: {e}")
+
 
 @router.callback_query(lambda c: c.data == "broadcast_start")
 async def start_broadcast(callback_query: CallbackQuery):
