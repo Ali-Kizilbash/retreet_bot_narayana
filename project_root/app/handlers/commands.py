@@ -4,7 +4,7 @@ from aiogram.types import Message
 from config import Config
 from app.keyboards.client_kb import get_two_column_keyboard
 from app.keyboards.admin_kb import get_admin_menu
-from app.handlers.common import user_status
+from app.handlers.state import user_status
 from app.handlers.common import is_staff
 import logging
 

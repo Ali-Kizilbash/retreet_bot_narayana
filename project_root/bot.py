@@ -4,6 +4,7 @@ from aiogram import Bot, Dispatcher
 from aiogram.client.bot import DefaultBotProperties
 from aiogram.fsm.storage.memory import MemoryStorage
 from config import load_config, validate_config
+from app.database.db import create_db_and_tables  # Импорт функции для создания таблиц
 from app.handlers import (common_router, client_router, admin_router,
                           support_router, commands_router,
                           broadcast_router)
@@ -41,6 +42,15 @@ async def main():
     # Проверка токена
     if not config.BOT_TOKEN or not isinstance(config.BOT_TOKEN, str) or len(config.BOT_TOKEN.split(":")) != 2:
         logger.error("Ошибка: Токен бота не загружен или имеет неверный формат.")
+        exit(1)
+
+    # Создание таблиц базы данных
+    logger.info("Инициализация базы данных и создание таблиц.")
+    try:
+        await create_db_and_tables()
+        logger.info("База данных успешно инициализирована.")
+    except Exception as e:
+        logger.error(f"Ошибка при инициализации базы данных: {e}")
         exit(1)
 
     # Инициализация бота

@@ -5,12 +5,15 @@ from aiogram import Router, types, Bot
 from aiogram.types import Message, CallbackQuery, FSInputFile
 from aiogram.filters import Command
 from config import Config, validate_config
-from app.database.crud import user_is_registered
-from app.database.db import get_async_session
 from app.keyboards.client_kb import get_client_type_keyboard, get_two_column_keyboard
 from app.keyboards.admin_kb import get_admin_menu
 from app.keyboards.set_commands import set_bot_commands
 from aiogram.fsm.context import FSMContext
+from app.database.crud import add_user, update_user_type, user_is_registered
+from app.database.db import get_async_session
+from sqlalchemy.future import select
+from app.database.models import User
+
 
 # Настройка логирования
 logging.basicConfig(
@@ -91,8 +94,6 @@ def is_staff(user_id: int = None, username: str = None) -> bool:
         return False
 
 
-
-
 def load_text(file_path):
     """Загружает текст из указанного файла."""
     print(f"Загрузка текста из файла: {file_path}")
@@ -111,7 +112,8 @@ def load_text(file_path):
 
 @router.message(Command("start"))
 async def start_command(message: Message, bot: Bot):
-    username = message.from_user.username
+    username = message.from_user.username or None  # Если отсутствует, то None
+    full_name = message.from_user.full_name or "Без имени"
     user_id = message.from_user.id
 
     # Логируем базовую информацию о пользователе
@@ -127,15 +129,34 @@ async def start_command(message: Message, bot: Bot):
         return
 
     # Проверяем права сотрудника (админа)
-    is_admin = False  # Флаг для проверки прав
-    if username and is_staff(username=username):
-        logger.info(f"Пользователь {username} (user_id: {user_id}) идентифицирован как сотрудник (по username).")
+    is_admin = False
+    client_type = "individual"  # Тип по умолчанию
+    if is_staff(user_id=user_id, username=username):  # Проверка через `is_staff`
+        logger.info(f"Пользователь {username} (user_id: {user_id}) идентифицирован как сотрудник.")
         is_admin = True
-    elif is_staff(user_id=user_id):
-        logger.info(f"Пользователь {username} (user_id: {user_id}) идентифицирован как сотрудник (по user_id).")
-        is_admin = True
-    else:
-        logger.warning(f"Пользователь {username} (user_id: {user_id}) не найден в списке сотрудников.")
+        client_type = "admin"  # Если сотрудник, тип клиента должен быть "admin"
+
+    # Работа с базой данных
+    try:
+        async with get_async_session() as session:
+            user_exists = await user_is_registered(user_id, session)
+
+            if user_exists:
+                logger.info(f"Пользователь {user_id} уже существует в базе данных.")
+            else:
+                logger.info(f"Пользователь {user_id} отсутствует в базе. Добавляем нового пользователя.")
+                await add_user(
+                    user_id=user_id,
+                    name=full_name,
+                    username=username,
+                    client_type=client_type,  # Добавляем тип клиента в зависимости от проверки
+                    session=session
+                )
+                logger.info(f"Пользователь {user_id} успешно добавлен в базу данных.")
+    except Exception as e:
+        logger.error(f"Ошибка при работе с базой данных для пользователя {user_id}: {e}")
+        await message.answer("Произошла ошибка при регистрации. Пожалуйста, повторите попытку позже.")
+        return
 
     # Показ админ-панели или клиентского меню
     if is_admin:
@@ -156,44 +177,40 @@ async def start_command(message: Message, bot: Bot):
     logger.debug(f"Результат обработки /start для пользователя {username} (user_id: {user_id}): {'Админ' if is_admin else 'Клиент'}")
 
 
-# Хранилище статусов пользователя (временное)
-user_status = {}
-
 @router.callback_query(lambda c: c.data and c.data.startswith("client_type:"))
 async def process_client_type(callback_query: CallbackQuery):
-    """
-    Обрабатывает выбор типа клиента (организатор или индивидуальный клиент) и сохраняет статус пользователя.
-    """
     client_type = callback_query.data.split(":")[1]
-    user_id = callback_query.from_user.id  # Идентификатор пользователя
+    user_id = callback_query.from_user.id
+    username = callback_query.from_user.username or "Без имени"
+    name = callback_query.from_user.full_name or "Без имени"
+
     logger.info(f"Обработка выбора типа клиента: {client_type} для пользователя {user_id}")
 
     try:
-        if client_type == "organizer":
-            logger.info("Пользователь выбрал категорию: Организатор мероприятий.")
-            user_status[user_id] = "organizer"  # Сохраняем статус пользователя
-            await callback_query.message.answer(
-                "Вы выбрали категорию: Организатор мероприятий."
-            )
-            await callback_query.message.answer(
-                "Пожалуйста, выберите нужное меню:",
-                reply_markup=get_two_column_keyboard(is_organizer=True)  # Меню с кнопками для организаторов
-            )
-        elif client_type == "individual":
-            logger.info("Пользователь выбрал категорию: Индивидуальный клиент.")
-            user_status[user_id] = "individual"  # Сохраняем статус пользователя
-            await callback_query.message.answer(
-                "Вы выбрали категорию: Индивидуальный клиент."
-            )
-            await callback_query.message.answer(
-                "Пожалуйста, выберите нужное меню:",
-                reply_markup=get_two_column_keyboard()  # Меню для индивидуальных клиентов
-            )
-
-        await callback_query.answer()  # Закрываем всплывающее уведомление
-        logger.info(f"Выбор типа клиента обработан успешно для пользователя {user_id}. Статус: {client_type}")
+        async with get_async_session() as session:
+            if not await user_is_registered(user_id, session):
+                await add_user(user_id, name, username, client_type, session)
+                logger.info(f"Пользователь {user_id} добавлен как {client_type}.")
+            else:
+                await update_user_type(user_id, client_type, session)
+                logger.info(f"Тип клиента пользователя {user_id} обновлён на {client_type}.")
     except Exception as e:
-        logger.error(f"Ошибка при обработке выбора типа клиента для пользователя {user_id}: {e}")
+        logger.error(f"Ошибка при добавлении/обновлении пользователя: {e}")
+        await callback_query.message.answer("Произошла ошибка при обработке вашего выбора. Попробуйте позже.")
+        return
+
+    # Отправка ответа клиенту
+    if client_type == "organizer":
+        await callback_query.message.answer("Вы выбрали категорию: Организатор мероприятий.")
+        await callback_query.message.answer("Пожалуйста, выберите нужное меню:",
+                                            reply_markup=get_two_column_keyboard(is_organizer=True))
+    elif client_type == "individual":
+        await callback_query.message.answer("Вы выбрали категорию: Индивидуальный клиент.")
+        await callback_query.message.answer("Пожалуйста, выберите нужное меню:",
+                                            reply_markup=get_two_column_keyboard())
+
+    await callback_query.answer()
+    logger.info(f"Выбор типа клиента обработан успешно для пользователя {user_id}. Статус: {client_type}")
 
 
 @router.callback_query(lambda c: c.data == "organizer_guide")

@@ -3,49 +3,34 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.database.models import User
 from datetime import datetime, timedelta
 
+
+
 async def add_user(user_id: int, name: str, username: str, client_type: str, session: AsyncSession):
-    """
-    Добавляет нового пользователя в базу данных.
-    """
+    """Добавляет нового пользователя в базу данных."""
     new_user = User(
         id=user_id,
         name=name,
         username=username,
-        client_type=client_type
+        client_type=client_type,
+        date_joined=datetime.utcnow()
     )
     session.add(new_user)
     await session.commit()
-    print(f"Пользователь {user_id} добавлен в базу данных.")
+
+
+async def user_is_registered(user_id: int, session: AsyncSession) -> bool:
+    """Проверяет, зарегистрирован ли пользователь в базе данных."""
+    result = await session.execute(select(User).where(User.id == user_id))
+    return result.scalar_one_or_none() is not None
 
 
 async def update_user_type(user_id: int, client_type: str, session: AsyncSession):
-    """
-    Обновляет тип клиента в базе данных.
-    """
+    """Обновляет тип клиента в базе данных."""
     result = await session.execute(select(User).where(User.id == user_id))
     user = result.scalar_one_or_none()
     if user:
         user.client_type = client_type
         await session.commit()
-        print(f"Тип клиента пользователя {user_id} обновлён на {client_type}.")
-    else:
-        print(f"Пользователь {user_id} не найден в базе данных.")
-
-
-async def get_user(user_id: int, session: AsyncSession):
-    """
-    Возвращает пользователя из базы данных.
-    """
-    result = await session.execute(select(User).where(User.id == user_id))
-    return result.scalar_one_or_none()
-
-
-async def user_is_registered(user_id: int, session: AsyncSession) -> bool:
-    """
-    Проверяет, зарегистрирован ли пользователь в базе данных.
-    """
-    result = await session.execute(select(User).where(User.id == user_id))
-    return result.scalar_one_or_none() is not None
 
 
 async def get_subscriber_stats(period: str, session: AsyncSession):
