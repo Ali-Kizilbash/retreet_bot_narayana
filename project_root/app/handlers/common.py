@@ -8,11 +8,11 @@ from config import Config, validate_config
 from app.keyboards.client_kb import get_client_type_keyboard, get_two_column_keyboard
 from app.keyboards.admin_kb import get_admin_menu
 from app.keyboards.set_commands import set_bot_commands
-from aiogram.fsm.context import FSMContext
 from app.database.crud import add_user, update_user_type, user_is_registered
 from app.database.db import get_async_session
 from sqlalchemy.future import select
 from app.database.models import User
+
 
 
 # Настройка логирования

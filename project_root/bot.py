@@ -1,3 +1,5 @@
+# bot.py
+
 import asyncio
 import logging
 from aiogram import Bot, Dispatcher
@@ -5,9 +7,14 @@ from aiogram.client.bot import DefaultBotProperties
 from aiogram.fsm.storage.memory import MemoryStorage
 from config import load_config, validate_config
 from app.database.db import create_db_and_tables  # Импорт функции для создания таблиц
-from app.handlers import (common_router, client_router, admin_router,
-                          support_router, commands_router,
-                          broadcast_router)
+from app.handlers import (
+    common_router,
+    client_router,
+    admin_router,
+    support_router,
+    commands_router,
+    broadcast_router
+)
 
 # Импорт функции для установки команд
 from app.keyboards.set_commands import set_bot_commands
@@ -36,7 +43,7 @@ async def main():
     # Загрузка конфигурации и проверка токена
     config = load_config()
     logger.info("Конфигурация загружена успешно.")
-    logger.info(f"Полный токен бота: {config.BOT_TOKEN}")
+    # Не рекомендуется логировать полный токен для безопасности
     logger.info(f"Длина токена: {len(config.BOT_TOKEN) if config.BOT_TOKEN else 'Токен отсутствует'}")
 
     # Проверка токена
@@ -53,8 +60,11 @@ async def main():
         logger.error(f"Ошибка при инициализации базы данных: {e}")
         exit(1)
 
-    # Инициализация бота
-    bot = Bot(token=config.BOT_TOKEN, default=DefaultBotProperties(parse_mode="HTML"))
+    # Инициализация бота с использованием DefaultBotProperties
+    bot = Bot(
+        token=config.BOT_TOKEN,
+        default=DefaultBotProperties(parse_mode="HTML")
+    )
     try:
         bot_user = await bot.get_me()
         logger.info(f"Бот успешно авторизован. Информация о боте: {bot_user}")
@@ -62,19 +72,19 @@ async def main():
         logger.error(f"Ошибка авторизации бота: {e}")
         exit(1)
 
-    # Установка команд меню
-    await set_bot_commands(bot)
-
     # Инициализация диспетчера с MemoryStorage
     dp = Dispatcher(storage=MemoryStorage())  # Использование MemoryStorage для хранения состояний
 
-    # Подключение маршрутизаторов
+    # Подключение роутеров
     dp.include_router(common_router)
     dp.include_router(client_router)
     dp.include_router(admin_router)
     dp.include_router(support_router)
     dp.include_router(commands_router)
     dp.include_router(broadcast_router)
+
+    # Установка команд меню
+    await set_bot_commands(bot)
 
     # Запуск бота с логированием состояния
     try:

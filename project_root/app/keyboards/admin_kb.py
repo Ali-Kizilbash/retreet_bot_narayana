@@ -8,12 +8,28 @@ def get_admin_menu():
         keyboard = InlineKeyboardMarkup(inline_keyboard=[
             [InlineKeyboardButton(text="Управление файлами", callback_data="manage_files")],
             [InlineKeyboardButton(text="Статистика подписчиков", callback_data="subscriber_stats")],
-            [InlineKeyboardButton(text="Запустить рассылку", callback_data="broadcast_start")]  # Кнопка для рассылки
+            [InlineKeyboardButton(text="Запустить рассылку", callback_data="broadcast_select_client_type")]
+
         ])
         print("Клавиатура админ-панели создана успешно.")
         return keyboard
     except Exception as e:
         print(f"Ошибка при создании клавиатуры админ-панели: {e}")
+
+
+def get_broadcast_client_type_menu():
+    """Клавиатура для выбора типа клиентов."""
+    try:
+        print("Создание клавиатуры выбора типа клиентов.")
+        keyboard = InlineKeyboardMarkup(inline_keyboard=[
+            [InlineKeyboardButton(text="Индивидуальные клиенты", callback_data="broadcast_individual")],
+            [InlineKeyboardButton(text="Организаторы мероприятий", callback_data="broadcast_organizer")],
+        ])
+        print("Клавиатура выбора типа клиентов создана успешно.")
+        return keyboard
+    except Exception as e:
+        print(f"Ошибка при создании клавиатуры выбора типа клиентов: {e}")
+
 
 
 def get_file_management_menu():
