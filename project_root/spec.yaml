@@ -1,0 +1,11 @@
+services:
+  - name: my-aiogram-bot
+    image: atillaaa/retreet_bot:latest  # Замените на ваш Docker Hub репозиторий
+    environment_slug: python-3
+    instance_size_slug: basic-xxs
+    instance_count: 1
+    run_command: python bot.py  # Команда для запуска бота
+    environment_variables:
+      BOT_TOKEN:
+        value: $BOT_TOKEN
+      # Добавьте другие переменные окружения по необходимости

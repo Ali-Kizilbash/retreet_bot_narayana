@@ -1,5 +1,3 @@
-# broadcast.py
-
 import os
 from aiogram import Router, types, F
 from aiogram.types import Message, Document, CallbackQuery
@@ -19,7 +17,7 @@ router = Router()
 logger = logging.getLogger(__name__)
 
 # Допустимые расширения для документов
-ALLOWED_EXTENSIONS = {"txt", "doc", "pdf", "epub", "fb2"}
+ALLOWED_EXTENSIONS = {"txt", "doc", "pdf", "epub", "fb2", "jpg", "jpeg", "png"}
 
 
 # Состояния для FSM
@@ -52,7 +50,7 @@ async def handle_client_type_selection(callback_query: CallbackQuery, state: FSM
 
     await callback_query.message.answer(
         f"Вы выбрали категорию: {'Индивидуальные клиенты' if selected_type == 'individual' else 'Организаторы мероприятий'}.\n"
-        "Теперь отправьте текст или документ для рассылки."
+        "Теперь отправьте текст, изображение или документ для рассылки."
     )
     await state.set_state(BroadcastStates.waiting_for_message_or_document)
     await callback_query.answer()
@@ -80,10 +78,13 @@ async def broadcast_command_handler(message: Message, state: FSMContext):
     logger.info(f"Пользователь {user_id} ({username}) начал процесс рассылки.")
 
 
-@router.message(BroadcastStates.waiting_for_message_or_document, F.content_type.in_([types.ContentType.TEXT, types.ContentType.DOCUMENT]))
+@router.message(
+    BroadcastStates.waiting_for_message_or_document,
+    F.content_type.in_([types.ContentType.TEXT, types.ContentType.DOCUMENT, types.ContentType.PHOTO])
+)
 async def handle_broadcast(message: Message, state: FSMContext):
     """
-    Обработчик для рассылки текстов и/или документов.
+    Обработчик для рассылки текстов, документов и изображений.
     """
     data = await state.get_data()
     broadcast_client_type = data.get("broadcast_client_type")
@@ -117,6 +118,9 @@ async def handle_broadcast(message: Message, state: FSMContext):
         return
 
     # Рассылка
+    sent_count = 0
+    failed_count = 0
+
     if message.content_type == types.ContentType.TEXT:
         text = message.text
         await message.answer("Начинаю рассылку текстового сообщения...")
@@ -124,24 +128,48 @@ async def handle_broadcast(message: Message, state: FSMContext):
         for client_id in client_ids:
             try:
                 await message.bot.send_message(client_id, text)
+                sent_count += 1
                 logger.info(f"Текстовое сообщение отправлено пользователю {client_id}")
             except Exception as e:
+                failed_count += 1
                 logger.error(f"Не удалось отправить текст пользователю {client_id}: {e}")
+
     elif message.content_type == types.ContentType.DOCUMENT:
         document: Document = message.document
         if document.file_name.split(".")[-1].lower() not in ALLOWED_EXTENSIONS:
-            await message.answer("Этот формат файла не поддерживается.")
+            await message.answer("Этот формат файла не поддерживается. Рассылка будет выполнена без документа.")
             logger.warning(f"Пользователь {message.from_user.id} попытался отправить неподдерживаемый файл: {document.file_name}")
-            return
-        await message.answer("Начинаю рассылку документа...")
-        logger.info("Начало рассылки документа.")
+        else:
+            await message.answer("Начинаю рассылку документа...")
+            logger.info("Начало рассылки документа.")
+            for client_id in client_ids:
+                try:
+                    await message.bot.send_document(client_id, document.file_id, caption=message.caption or "Документ для вас")
+                    sent_count += 1
+                    logger.info(f"Документ {document.file_name} отправлен пользователю {client_id}")
+                except Exception as e:
+                    failed_count += 1
+                    logger.error(f"Не удалось отправить документ пользователю {client_id}: {e}")
+
+    elif message.content_type == types.ContentType.PHOTO:
+        photo = message.photo[-1]
+        caption = message.caption or ""
+        await message.answer("Начинаю рассылку изображения...")
+        logger.info("Начало рассылки изображения.")
         for client_id in client_ids:
             try:
-                await message.bot.send_document(client_id, document.file_id, caption="Документ для вас")
-                logger.info(f"Документ {document.file_name} отправлен пользователю {client_id}")
+                await message.bot.send_photo(client_id, photo.file_id, caption=caption)
+                sent_count += 1
+                logger.info(f"Изображение отправлено пользователю {client_id}")
             except Exception as e:
-                logger.error(f"Не удалось отправить документ пользователю {client_id}: {e}")
+                failed_count += 1
+                logger.error(f"Не удалось отправить изображение пользователю {client_id}: {e}")
 
-    await message.answer("Рассылка завершена.")
+    # Итоговый результат рассылки
+    await message.answer(
+        f"Рассылка завершена.\n"
+        f"Успешно отправлено: {sent_count}\n"
+        f"Не удалось отправить: {failed_count}"
+    )
     await state.clear()
     logger.info("Рассылка завершена.")
