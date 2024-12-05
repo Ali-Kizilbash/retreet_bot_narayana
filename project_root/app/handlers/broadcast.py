@@ -1,91 +1,81 @@
-import os
-from aiogram import Router, types, F
-from aiogram.types import Message, Document, CallbackQuery
-from aiogram.filters import Command
-from config import Config
-from app.handlers.common import is_staff
-from app.database.db import get_async_session
-from sqlalchemy.future import select
-from app.database.models import User
-from aiogram.fsm.state import State, StatesGroup
-from aiogram.fsm.context import FSMContext
-from app.keyboards.admin_kb import get_broadcast_client_type_menu  # Убедитесь, что импорт корректен
+# broadcast.py
 
+import os
 import logging
+from aiogram import Router, types, F, Bot
+from aiogram.types import Message, Document, CallbackQuery, ContentType
+from aiogram.filters import Command
+from aiogram.fsm.context import FSMContext
+from aiogram.fsm.state import StatesGroup, State
+from app.keyboards.admin_kb import get_broadcast_client_type_menu
+from app.handlers.common import is_staff  # Функция проверки прав администратора
+from app.database.db import get_async_session
+from app.database.models import User
+from sqlalchemy.future import select
 
 router = Router()
 logger = logging.getLogger(__name__)
 
-# Допустимые расширения для документов
-ALLOWED_EXTENSIONS = {"txt", "doc", "pdf", "epub", "fb2", "jpg", "jpeg", "png"}
-
-
-# Состояния для FSM
 class BroadcastStates(StatesGroup):
     waiting_for_client_type = State()
     waiting_for_message_or_document = State()
-
-
-@router.callback_query(lambda c: c.data == "broadcast_select_client_type")
-async def broadcast_select_client_type(callback_query: CallbackQuery, state: FSMContext):
-    """
-    Начало процесса рассылки: выбор категории клиентов.
-    """
-    await state.set_state(BroadcastStates.waiting_for_client_type)
-    await callback_query.message.answer(
-        "Выберите категорию клиентов для рассылки:",
-        reply_markup=get_broadcast_client_type_menu()
-    )
-    await callback_query.answer()
-    logger.info("Меню выбора категории клиентов для рассылки успешно отображено.")
-
-
-@router.callback_query(lambda c: c.data in ["broadcast_individual", "broadcast_organizer"])
-async def handle_client_type_selection(callback_query: CallbackQuery, state: FSMContext):
-    """
-    Обработчик выбора типа клиентов для рассылки.
-    """
-    selected_type = "individual" if callback_query.data == "broadcast_individual" else "organizer"
-    await state.update_data(broadcast_client_type=selected_type)
-
-    await callback_query.message.answer(
-        f"Вы выбрали категорию: {'Индивидуальные клиенты' if selected_type == 'individual' else 'Организаторы мероприятий'}.\n"
-        "Теперь отправьте текст, изображение или документ для рассылки."
-    )
-    await state.set_state(BroadcastStates.waiting_for_message_or_document)
-    await callback_query.answer()
-    logger.info(f"Тип клиентов для рассылки установлен: {selected_type}")
-
+    waiting_for_confirmation = State()
 
 @router.message(Command("broadcast"))
-async def broadcast_command_handler(message: Message, state: FSMContext):
-    """
-    Команда для начала рассылки, доступна только сотрудникам или владельцу.
-    """
+async def start_broadcast(message: Message, state: FSMContext):
+    """Начало процесса рассылки сообщений через команду /broadcast."""
     user_id = message.from_user.id
-    username = f"@{message.from_user.username}" if message.from_user.username else ""
+    username = message.from_user.username or "Без имени"
+    logger.info(f"Команда /broadcast получена от пользователя: user_id={user_id}, username={username}")
 
     if not is_staff(user_id=user_id, username=username):
-        await message.answer("У вас нет прав на выполнение этой команды.")
-        logger.warning(f"Пользователь {user_id} ({username}) попытался начать рассылку без прав.")
+        logger.warning(f"Пользователь {user_id} ({username}) попытался использовать /broadcast без прав.")
+        await message.answer("У вас нет прав для выполнения этой команды.")
         return
 
-    await state.set_state(BroadcastStates.waiting_for_client_type)
-    await message.answer(
-        "Пожалуйста, выберите категорию клиентов для рассылки:",
-        reply_markup=get_broadcast_client_type_menu()
-    )
-    logger.info(f"Пользователь {user_id} ({username}) начал процесс рассылки.")
+    try:
+        await message.answer("Выберите категорию клиентов для рассылки:", reply_markup=get_broadcast_client_type_menu())
+        await state.set_state(BroadcastStates.waiting_for_client_type)
+        logger.info("Меню выбора категории клиентов для рассылки успешно отображено.")
+    except Exception as e:
+        logger.error(f"Ошибка при отображении меню рассылки: {e}")
+        await message.answer("Произошла ошибка при отображении меню рассылки.")
 
+@router.callback_query(lambda c: c.data == "broadcast_select_client_type")
+async def handle_broadcast_select_client_type(callback_query: CallbackQuery, state: FSMContext):
+    """Обработка нажатия кнопки 'Запустить рассылку' в админ-панели."""
+    try:
+        await callback_query.message.answer("Выберите категорию клиентов для рассылки:", reply_markup=get_broadcast_client_type_menu())
+        await state.set_state(BroadcastStates.waiting_for_client_type)
+        await callback_query.answer()
+        logger.info("Меню выбора категории клиентов для рассылки успешно отображено через кнопку.")
+    except Exception as e:
+        logger.error(f"Ошибка при отображении меню рассылки: {e}")
+        await callback_query.message.answer("Произошла ошибка при отображении меню рассылки.")
+        await callback_query.answer()
+
+@router.callback_query(BroadcastStates.waiting_for_client_type)
+async def select_client_type(callback_query: CallbackQuery, state: FSMContext):
+    """Обработка выбора категории клиентов для рассылки."""
+    broadcast_client_type = callback_query.data
+    logger.info(f"Тип клиентов для рассылки установлен: {broadcast_client_type}")
+
+    # Преобразуем callback_data в тип клиента, если необходимо
+    # Например, "broadcast_individual" -> "individual"
+    if broadcast_client_type.startswith("broadcast_"):
+        broadcast_client_type = broadcast_client_type.replace("broadcast_", "")
+
+    await state.update_data(broadcast_client_type=broadcast_client_type)
+    await callback_query.message.answer("Пожалуйста, отправьте сообщение или документ для рассылки.")
+    await state.set_state(BroadcastStates.waiting_for_message_or_document)
+    await callback_query.answer()
 
 @router.message(
     BroadcastStates.waiting_for_message_or_document,
-    F.content_type.in_([types.ContentType.TEXT, types.ContentType.DOCUMENT, types.ContentType.PHOTO])
+    F.content_type.in_([ContentType.TEXT, ContentType.DOCUMENT, ContentType.PHOTO])
 )
-async def handle_broadcast(message: Message, state: FSMContext):
-    """
-    Обработчик для рассылки текстов, документов и изображений.
-    """
+async def handle_broadcast_message(message: Message, state: FSMContext):
+    """Обработка сообщения или документа для рассылки."""
     data = await state.get_data()
     broadcast_client_type = data.get("broadcast_client_type")
 
@@ -97,7 +87,8 @@ async def handle_broadcast(message: Message, state: FSMContext):
     # Получение списка клиентов из базы данных
     client_ids = []
     try:
-        async with get_async_session() as session:
+        session = await get_async_session()
+        async with session:
             result = await session.execute(
                 select(User).where(User.client_type == broadcast_client_type)
             )
@@ -109,6 +100,7 @@ async def handle_broadcast(message: Message, state: FSMContext):
     except Exception as e:
         logger.error(f"Ошибка при получении списка клиентов: {e}")
         await message.answer("Произошла ошибка при подготовке рассылки. Попробуйте позже.")
+        await state.clear()
         return
 
     if not client_ids:
@@ -117,59 +109,69 @@ async def handle_broadcast(message: Message, state: FSMContext):
         logger.info("Нет клиентов для рассылки.")
         return
 
-    # Рассылка
-    sent_count = 0
-    failed_count = 0
-
-    if message.content_type == types.ContentType.TEXT:
-        text = message.text
-        await message.answer("Начинаю рассылку текстового сообщения...")
-        logger.info("Начало рассылки текстового сообщения.")
-        for client_id in client_ids:
-            try:
-                await message.bot.send_message(client_id, text)
-                sent_count += 1
-                logger.info(f"Текстовое сообщение отправлено пользователю {client_id}")
-            except Exception as e:
-                failed_count += 1
-                logger.error(f"Не удалось отправить текст пользователю {client_id}: {e}")
-
-    elif message.content_type == types.ContentType.DOCUMENT:
-        document: Document = message.document
-        if document.file_name.split(".")[-1].lower() not in ALLOWED_EXTENSIONS:
-            await message.answer("Этот формат файла не поддерживается. Рассылка будет выполнена без документа.")
-            logger.warning(f"Пользователь {message.from_user.id} попытался отправить неподдерживаемый файл: {document.file_name}")
-        else:
-            await message.answer("Начинаю рассылку документа...")
-            logger.info("Начало рассылки документа.")
-            for client_id in client_ids:
-                try:
-                    await message.bot.send_document(client_id, document.file_id, caption=message.caption or "Документ для вас")
-                    sent_count += 1
-                    logger.info(f"Документ {document.file_name} отправлен пользователю {client_id}")
-                except Exception as e:
-                    failed_count += 1
-                    logger.error(f"Не удалось отправить документ пользователю {client_id}: {e}")
-
-    elif message.content_type == types.ContentType.PHOTO:
-        photo = message.photo[-1]
-        caption = message.caption or ""
-        await message.answer("Начинаю рассылку изображения...")
-        logger.info("Начало рассылки изображения.")
-        for client_id in client_ids:
-            try:
-                await message.bot.send_photo(client_id, photo.file_id, caption=caption)
-                sent_count += 1
-                logger.info(f"Изображение отправлено пользователю {client_id}")
-            except Exception as e:
-                failed_count += 1
-                logger.error(f"Не удалось отправить изображение пользователю {client_id}: {e}")
-
-    # Итоговый результат рассылки
-    await message.answer(
-        f"Рассылка завершена.\n"
-        f"Успешно отправлено: {sent_count}\n"
-        f"Не удалось отправить: {failed_count}"
+    # Сохранение информации о рассылке в состоянии
+    await state.update_data(
+        message_to_broadcast=message,
+        client_ids=client_ids
     )
-    await state.clear()
-    logger.info("Рассылка завершена.")
+
+    await message.answer(f"Сообщение готово к отправке {len(client_ids)} пользователям. Отправить?", reply_markup=get_confirmation_keyboard())
+    await state.set_state(BroadcastStates.waiting_for_confirmation)
+    logger.info(f"Готовность к рассылке сообщений {len(client_ids)} пользователям.")
+
+def get_confirmation_keyboard():
+    """Клавиатура с кнопками подтверждения и отмены."""
+    buttons = [
+        [types.InlineKeyboardButton(text="✅ Отправить", callback_data="confirm_broadcast")],
+        [types.InlineKeyboardButton(text="❌ Отмена", callback_data="cancel_broadcast")]
+    ]
+    return types.InlineKeyboardMarkup(inline_keyboard=buttons)
+
+@router.callback_query(BroadcastStates.waiting_for_confirmation, lambda c: c.data == "confirm_broadcast")
+async def confirm_broadcast(callback_query: CallbackQuery, state: FSMContext, bot: Bot):
+    """Подтверждение и отправка рассылки."""
+    data = await state.get_data()
+    message_to_broadcast: Message = data.get("message_to_broadcast")
+    client_ids = data.get("client_ids", [])
+
+    try:
+        await callback_query.message.answer("Начинаю рассылку...")
+        await callback_query.answer()
+
+        success_count = 0
+        failure_count = 0
+
+        for user_id in client_ids:
+            try:
+                if message_to_broadcast.content_type == ContentType.TEXT:
+                    await bot.send_message(chat_id=user_id, text=message_to_broadcast.text)
+                elif message_to_broadcast.content_type == ContentType.DOCUMENT:
+                    await bot.send_document(chat_id=user_id, document=message_to_broadcast.document.file_id, caption=message_to_broadcast.caption)
+                elif message_to_broadcast.content_type == ContentType.PHOTO:
+                    await bot.send_photo(chat_id=user_id, photo=message_to_broadcast.photo[-1].file_id, caption=message_to_broadcast.caption)
+                success_count += 1
+            except Exception as e:
+                logger.error(f"Не удалось отправить сообщение пользователю {user_id}: {e}")
+                failure_count += 1
+
+        await callback_query.message.answer(f"Рассылка завершена. Успешно: {success_count}, Ошибок: {failure_count}.")
+        await state.clear()
+        logger.info(f"Рассылка завершена. Успешно: {success_count}, Ошибок: {failure_count}.")
+    except Exception as e:
+        logger.error(f"Ошибка при отправке рассылки: {e}")
+        await callback_query.message.answer("Произошла ошибка при отправке рассылки.")
+    finally:
+        await callback_query.answer()
+
+@router.callback_query(BroadcastStates.waiting_for_confirmation, lambda c: c.data == "cancel_broadcast")
+async def cancel_broadcast(callback_query: CallbackQuery, state: FSMContext):
+    """Отмена рассылки."""
+    try:
+        await callback_query.message.answer("Рассылка отменена.")
+        await state.clear()
+        await callback_query.answer()
+        logger.info("Рассылка отменена пользователем.")
+    except Exception as e:
+        logger.error(f"Ошибка при отмене рассылки: {e}")
+        await callback_query.message.answer("Произошла ошибка при отмене рассылки.")
+        await callback_query.answer()

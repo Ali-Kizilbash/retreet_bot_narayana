@@ -2,8 +2,13 @@
 
 from dotenv import load_dotenv
 import os
+import logging
+from pathlib import Path
+from typing import List
 
 # Загрузка переменных окружения
+if not Path(".env").exists():
+    logging.warning("Файл .env не найден. Проверьте настройки окружения.")
 load_dotenv()
 
 
@@ -18,6 +23,9 @@ class Config:
     EVENT_ORGANIZER_GUIDE_FILE = "resources/event_organizer_guide.pdf"
     RULES_FILE = "resources/rules.txt"
 
+    # Список ID администраторов (если используете этот подход)
+    ADMIN_IDS: List[int] = list(map(int, os.getenv("ADMIN_IDS", "").split(','))) if os.getenv("ADMIN_IDS") else []
+
     # Тексты приветственных сообщений
     WELCOME_MESSAGE = (
         "🌿 Добро пожаловать! Я — бот клиентской поддержки центра Narayana в Сочи. "
@@ -28,7 +36,7 @@ class Config:
 
     # Параметры для работы с погодным API
     WEATHER_API_URL = "https://api.open-meteo.com/v1/forecast?latitude=43.5855&longitude=39.7202&current_weather=true"
-    
+
     # Словарь перевода описаний погоды
     WEATHER_CODES = {
         0: "ясно",
@@ -72,7 +80,8 @@ class Config:
         ],
         "maps": [
             {"name": "Google Maps", "url": "https://www.google.ru/maps/place/Нараяна/@43.6809883,39.6058015,17z"},
-            {"name": "Яндекс Карты", "url": "https://yandex.ru/maps/org/narayana/192015920362/?ll=39.607847%2C43.680902"},
+            {"name": "Яндекс Карты",
+             "url": "https://yandex.ru/maps/org/narayana/192015920362/?ll=39.607847%2C43.680902"},
             {"name": "2Гис", "url": "https://2gis.ru/sochi/firm/70000001049866178?m=39.607907%2C43.680824%2F16"}
         ],
         "contact_details": [
@@ -111,4 +120,4 @@ def validate_config():
 
 def load_config():
     """Возвращает экземпляр Config для использования в других частях кода."""
-    return Config
+    return Config()

@@ -1,3 +1,5 @@
+# common.py
+
 import os
 import aiohttp
 import logging
@@ -10,10 +12,8 @@ from app.keyboards.admin_kb import get_admin_menu
 from app.keyboards.set_commands import set_bot_commands
 from app.database.crud import add_user, update_user_type, user_is_registered
 from app.database.db import get_async_session
-from sqlalchemy.future import select
 from app.database.models import User
-
-
+from datetime import datetime
 
 # Настройка логирования
 logging.basicConfig(
@@ -138,7 +138,8 @@ async def start_command(message: Message, bot: Bot):
 
     # Работа с базой данных
     try:
-        async with get_async_session() as session:
+        session = await get_async_session()
+        async with session:
             user_exists = await user_is_registered(user_id, session)
 
             if user_exists:
@@ -187,7 +188,8 @@ async def process_client_type(callback_query: CallbackQuery):
     logger.info(f"Обработка выбора типа клиента: {client_type} для пользователя {user_id}")
 
     try:
-        async with get_async_session() as session:
+        session = await get_async_session()
+        async with session:
             if not await user_is_registered(user_id, session):
                 await add_user(user_id, name, username, client_type, session)
                 logger.info(f"Пользователь {user_id} добавлен как {client_type}.")
@@ -237,7 +239,6 @@ async def send_organizer_guide(callback_query: CallbackQuery):
         except Exception as e:
             logger.error(f"Ошибка при отправке руководства организатора: {e}")
             await callback_query.message.answer("Произошла ошибка при отправке руководства организатора.")
-
 
 
 @router.callback_query(lambda c: c.data == "rules")
@@ -297,7 +298,10 @@ async def send_links(callback_query: CallbackQuery, links):
     """Отправка списка ссылок."""
     message_text = ""
     for link in links:
-        message_text += f"{link['name']}: [ссылка]({link['url']})\n"
+        if 'url' in link:
+            message_text += f"{link['name']}: [ссылка]({link['url']})\n"
+        elif 'text' in link:
+            message_text += f"{link['text']}\n"
 
     await callback_query.message.answer(message_text, parse_mode="Markdown")
 

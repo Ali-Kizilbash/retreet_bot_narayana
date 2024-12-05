@@ -1,14 +1,11 @@
-from sqlalchemy.orm import declarative_base
-from sqlalchemy import BigInteger, Column, String, DateTime
+from sqlalchemy import Column, BigInteger, String, DateTime
+from app.database.db import Base
 from datetime import datetime
 
-Base = declarative_base()
-
 class User(Base):
-    __tablename__ = 'users'
-
-    id = Column(BigInteger, primary_key=True, index=True)  # ID пользователя из Telegram
-    name = Column(String, nullable=True)               # Имя пользователя
-    username = Column(String, nullable=True)           # Никнейм пользователя
-    client_type = Column(String, nullable=False, default="individual")  # Тип клиента
-    date_joined = Column(DateTime, nullable=False, default=datetime.utcnow)  # Дата регистрации
+    __tablename__ = "users"
+    id = Column(BigInteger, primary_key=True, autoincrement=False)
+    name = Column(String(255), nullable=True)
+    username = Column(String(255), nullable=True)
+    client_type = Column(String(50), nullable=False)
+    date_joined = Column(DateTime, default=datetime.utcnow, nullable=False)
