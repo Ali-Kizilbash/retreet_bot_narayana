@@ -1,0 +1,105 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="AutoImportSettings">
+    <option name="autoReloadType" value="SELECTIVE" />
+  </component>
+  <component name="ChangeListManager">
+    <list default="true" id="ae68ae1a-d419-4c45-b901-8397e4be5c90" name="Changes" comment="">
+      <change beforePath="$PROJECT_DIR$/.dockerignore" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/.gitignore" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/.gitignore" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/inspectionProfiles/profiles_settings.xml" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/misc.xml" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/modules.xml" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/project_root.iml" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/vcs.xml" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Dockerfile" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/LICENSE" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/README.md" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/__init__.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/database/__init__.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/database/crud.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/database/db.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/database/models.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/handlers/__init__.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/handlers/admin.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/handlers/broadcast.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/handlers/client.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/handlers/commands.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/handlers/common.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/handlers/state.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/handlers/support.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/keyboards/__init__.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/keyboards/admin_kb.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/keyboards/client_kb.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/keyboards/set_commands.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/main.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/services/__init__.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/services/neural_api.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/services/newsletter.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/utils/__init__.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/utils/helpers.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/utils/logging_config.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/bot.log" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/bot.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/config.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/docker-compose.yml" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/init_db.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/requirements.txt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/resources/directions.txt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/resources/event_organizer_guide.pdf" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/resources/rules.txt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/resources/staff_usernames.txt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/spec.yaml" beforeDir="false" />
+    </list>
+    <option name="SHOW_DIALOG" value="false" />
+    <option name="HIGHLIGHT_CONFLICTS" value="true" />
+    <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
+    <option name="LAST_RESOLUTION" value="IGNORE" />
+  </component>
+  <component name="Git.Settings">
+    <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$/.." />
+  </component>
+  <component name="ProjectColorInfo">{
+  &quot;associatedIndex&quot;: 1
+}</component>
+  <component name="ProjectId" id="2pdKcEWCADd9Yw0kIS5mY3fnjBy" />
+  <component name="ProjectViewState">
+    <option name="hideEmptyMiddlePackages" value="true" />
+    <option name="showLibraryContents" value="true" />
+  </component>
+  <component name="PropertiesComponent">{
+  &quot;keyToString&quot;: {
+    &quot;Python.config.executor&quot;: &quot;Debug&quot;,
+    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.git.unshallow&quot;: &quot;true&quot;,
+    &quot;git-widget-placeholder&quot;: &quot;new-feature&quot;,
+    &quot;last_opened_file_path&quot;: &quot;/Users/ali/Desktop/dev/retreet_bot_narayana/project_root&quot;,
+    &quot;settings.editor.selected.configurable&quot;: &quot;preferences.customizations&quot;
+  }
+}</component>
+  <component name="RecentsManager">
+    <key name="MoveFile.RECENT_KEYS">
+      <recent name="$PROJECT_DIR$" />
+      <recent name="$PROJECT_DIR$/resources" />
+    </key>
+  </component>
+  <component name="SharedIndexes">
+    <attachedChunks>
+      <set>
+        <option value="bundled-python-sdk-fb887030ada0-aa17d162503b-com.jetbrains.pycharm.community.sharedIndexes.bundled-PC-243.21565.199" />
+      </set>
+    </attachedChunks>
+  </component>
+  <component name="SpellCheckerSettings" RuntimeDictionaries="0" Folders="0" CustomDictionaries="0" DefaultDictionary="application-level" UseSingleDictionary="true" transferred="true" />
+  <component name="TaskManager">
+    <task active="true" id="Default" summary="Default task">
+      <changelist id="ae68ae1a-d419-4c45-b901-8397e4be5c90" name="Changes" comment="" />
+      <created>1733090589911</created>
+      <option name="number" value="Default" />
+      <option name="presentableId" value="Default" />
+      <updated>1733090589911</updated>
+    </task>
+    <servers />
+  </component>
+</project>
