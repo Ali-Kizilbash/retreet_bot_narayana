@@ -3,7 +3,8 @@ name: CI/CD Pipeline
 on:
   push:
     branches:
-      - new-feauture
+      - new-feature  # Ваши ветки для пуша
+  workflow_dispatch:  # Добавлено для ручного запуска
 
 jobs:
   build:
@@ -27,7 +28,7 @@ jobs:
         with:
           context: .
           push: true
-          tags: atillaaa/retreet_bot_narayana:new-feauture  # Замените на ваш Docker Hub репозиторий
+          tags: atillaaa/retreet_bot_narayana:new-feature  # Замените на ваш Docker Hub репозиторий
 
   deploy:
     needs: build
