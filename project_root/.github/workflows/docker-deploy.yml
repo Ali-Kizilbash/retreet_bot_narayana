@@ -27,7 +27,7 @@ jobs:
         with:
           context: .
           push: true
-          tags: atillaaa/retreet_bot_narayana:latest  # Замените на ваш Docker Hub репозиторий
+          tags: atillaaa/retreet_bot_narayana:new_feauture  # Замените на ваш Docker Hub репозиторий
 
   deploy:
     needs: build
@@ -39,7 +39,7 @@ jobs:
       - name: Set up SSH key for TimeWeb
         uses: webfactory/ssh-agent@v0.5.3
         with:
-          ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
+          ssh-private-key: ${{ secrets.SSH_KEY }}
 
       - name: Deploy to TimeWeb server
         run: |
