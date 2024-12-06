@@ -3,7 +3,7 @@ name: CI/CD Pipeline
 on:
   push:
     branches:
-      - new-future
+      - new-feauture
 
 jobs:
   build:
