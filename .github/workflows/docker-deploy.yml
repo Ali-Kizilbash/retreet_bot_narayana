@@ -43,7 +43,7 @@ jobs:
       - name: Start SSH agent and add key
         uses: webfactory/ssh-agent@v0.5.3
         with:
-          ssh-private-key: ${{ secrets.SSH_KEY }}  # Убедитесь, что секрет называется SSH_KEY
+          ssh-private-key: ${{ secrets.SSH_KEY_DEPLOY }}  # Убедитесь, что секрет называется SSH_KEY
 
       # Проверка содержимого SSH-агента
       - name: List SSH identities
