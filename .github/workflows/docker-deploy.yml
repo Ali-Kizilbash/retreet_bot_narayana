@@ -41,7 +41,7 @@ jobs:
         uses: webfactory/ssh-agent@v0.5.3
         with:
           ssh-private-key: ${{ secrets.SSH_KEY }}
-          ssh-passphrase: ${{ secrets.SSH_PASSPHRASE }}  # Добавлено для передачи парольной фразы
+
 
       - name: Deploy to TimeWeb server
         run: |
