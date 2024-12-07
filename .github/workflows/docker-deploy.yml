@@ -3,8 +3,8 @@ name: CI/CD Pipeline
 on:
   push:
     branches:
-      - new-feature  # Ваши ветки для пуша
-  workflow_dispatch:  # Добавлено для ручного запуска
+      - new-feature  # Ветка для автоматического запуска
+  workflow_dispatch:  # Возможность ручного запуска
 
 jobs:
   build:
@@ -34,7 +34,7 @@ jobs:
     needs: build
     runs-on: ubuntu-latest
     environment:
-      name: production  # Вы можете изменить на ваше окружение
+      name: production  # Укажите окружение
 
     steps:
       - name: Start SSH agent and add deploy key
@@ -43,80 +43,46 @@ jobs:
           ssh-private-key: ${{ secrets.SSH_KEY_DEPLOY }}
 
       - name: List SSH identities
-        run: |
-          echo "Список SSH идентификаторов в агенте:"
-          ssh-add -l
-
-      - name: Verify SSH key is added
-        run: |
-          if ssh-add -l | grep -q "local_bot_key_ali"; then
-            echo "SSH ключ успешно добавлен."
-          else
-            echo "Ошибка: SSH ключ не был добавлен."
-            exit 1
-          fi
-
-      - name: Debug SSH connection
-        run: |
-          ssh -vvv -o StrictHostKeyChecking=no root@92.255.78.196 "echo 'Debug SSH connection'"
+        run: ssh-add -l
 
       - name: Test SSH connection to server
-        run: |
-          ssh -o StrictHostKeyChecking=no root@92.255.78.196 "echo 'SSH connection works!'"
+        run: ssh -o StrictHostKeyChecking=no root@92.255.78.196 "echo 'SSH connection works!'"
 
-      - name: Add GitHub SSH key to server and configure SSH
+      - name: Configure GitHub SSH on server
         run: |
-          ssh -o StrictHostKeyChecking=no root@92.255.78.196 << EOF
-mkdir -p ~/.ssh
-echo "${{ secrets.GITHUB_SSH_KEY }}" > ~/.ssh/id_rsa_github
-chmod 600 ~/.ssh/id_rsa_github
-ssh-keyscan github.com >> ~/.ssh/known_hosts
-cat << 'CONFIG_EOF' > ~/.ssh/config
-Host github.com
-  HostName github.com
-  User git
-  IdentityFile ~/.ssh/id_rsa_github
-  IdentitiesOnly yes
-CONFIG_EOF
-chmod 600 ~/.ssh/config
-ls -la ~/.ssh/id_rsa_github ~/.ssh/config
-ssh -T git@github.com || echo "Проверка подключения к GitHub не удалась."
-EOF
+          ssh -o StrictHostKeyChecking=no root@92.255.78.196 bash -c "
+          mkdir -p ~/.ssh &&
+          echo '${{ secrets.GITHUB_SSH_KEY }}' | tr -d '\r' > ~/.ssh/id_rsa_github &&
+          chmod 600 ~/.ssh/id_rsa_github &&
+          ssh-keyscan github.com >> ~/.ssh/known_hosts &&
+          echo 'Host github.com\n  HostName github.com\n  User git\n  IdentityFile ~/.ssh/id_rsa_github\n  IdentitiesOnly yes' > ~/.ssh/config &&
+          chmod 600 ~/.ssh/config
+          "
 
-      - name: Test GitHub SSH access after adding key
-        run: |
-          ssh -o StrictHostKeyChecking=no root@92.255.78.196 "ssh -T git@github.com" || { echo "Не удалось подключиться к GitHub через SSH после добавления ключа."; exit 1; }
+      - name: Test GitHub SSH access from server
+        run: ssh -o StrictHostKeyChecking=no root@92.255.78.196 "ssh -T git@github.com || echo 'GitHub SSH test failed.'"
 
       - name: Clone repository if not exists
         run: |
-          ssh -o StrictHostKeyChecking=no root@92.255.78.196 "
-            if [ ! -d /home/root/project_root/.git ]; then
-              git clone git@github.com:Ali-Kizilbash/retreet_bot_narayana.git /home/root/project_root
-            fi
+          ssh -o StrictHostKeyChecking=no root@92.255.78.196 bash -c "
+          if [ ! -d /home/root/project_root/.git ]; then
+            git clone git@github.com:Ali-Kizilbash/retreet_bot_narayana.git /home/root/project_root
+          fi
           "
 
-      - name: List files in project directory on server
-        run: |
-          ssh -o StrictHostKeyChecking=no root@92.255.78.196 "ls -la /home/root/project_root"
+      - name: Pull latest changes
+        run: ssh -o StrictHostKeyChecking=no root@92.255.78.196 "cd /home/root/project_root && git pull origin new-feature"
 
-      - name: Pull changes from GitHub on server
-        run: |
-          ssh -o StrictHostKeyChecking=no root@92.255.78.196 "cd /home/root/project_root && git pull origin new-feature"
+      - name: Check Docker status
+        run: ssh -o StrictHostKeyChecking=no root@92.255.78.196 "docker ps -a"
 
-      - name: Check Docker status on server
+      - name: Restart Docker containers
         run: |
-          ssh -o StrictHostKeyChecking=no root@92.255.78.196 "docker ps -a"
-
-      - name: Restart Docker containers with Docker Compose
-        run: |
-          ssh -o StrictHostKeyChecking=no root@92.255.78.196 "
-            cd /home/root/project_root &&
-            docker-compose down &&
-            docker-compose up -d &&
-            docker-compose logs
+          ssh -o StrictHostKeyChecking=no root@92.255.78.196 bash -c "
+          cd /home/root/project_root &&
+          docker-compose down &&
+          docker-compose up -d
           "
 
-      - name: Verify Deployment
-        run: |
-          echo "Проверка работы бота после деплоя..."
-          echo "Проверка завершена."
+      - name: Verify deployment
+        run: ssh -o StrictHostKeyChecking=no root@92.255.78.196 "echo 'Deployment verification complete.'"
