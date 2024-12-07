@@ -66,7 +66,7 @@ jobs:
         run: |
           ssh -o StrictHostKeyChecking=no root@92.255.78.196 bash -c "
           if [ ! -d /home/root/project_root/.git ]; then
-            git clone git@github.com:Ali-Kizilbash/retreet_bot_narayana.git /home/root/project_root
+            git clone https://github.com/Ali-Kizilbash/retreet_bot_narayana.git /home/root/project_root
           fi
           "
 
