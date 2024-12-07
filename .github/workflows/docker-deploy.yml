@@ -37,19 +37,16 @@ jobs:
       name: production  # Вы можете изменить на ваше окружение
 
     steps:
-      # Шаг 1: Установка SSH-агента и добавление ключа для подключения к серверу
       - name: Start SSH agent and add deploy key
         uses: webfactory/ssh-agent@v0.5.3
         with:
-          ssh-private-key: ${{ secrets.SSH_KEY_DEPLOY }}  # Это ключ для доступа к серверу
+          ssh-private-key: ${{ secrets.SSH_KEY_DEPLOY }}
 
-      # Шаг 2: Проверка содержимого SSH-агента
       - name: List SSH identities
         run: |
           echo "Список SSH идентификаторов в агенте:"
           ssh-add -l
 
-      # Шаг 3: Дополнительная проверка наличия ключа
       - name: Verify SSH key is added
         run: |
           if ssh-add -l | grep -q "local_bot_key_ali"; then
@@ -59,111 +56,59 @@ jobs:
             exit 1
           fi
 
-      # Шаг 4: Отладочный шаг для SSH подключения к серверу
       - name: Debug SSH connection
         run: |
           ssh -vvv -o StrictHostKeyChecking=no root@92.255.78.196 "echo 'Debug SSH connection'"
 
-      # Шаг 5: Проверка подключения к серверу
       - name: Test SSH connection to server
         run: |
-          echo "Проверка SSH подключения к серверу..."
           ssh -o StrictHostKeyChecking=no root@92.255.78.196 "echo 'SSH connection works!'"
 
-      # Шаг 6: Проверка SSH-доступа к GitHub с сервера до настройки ключа
-      - name: Test GitHub SSH access from server before adding key
-        run: |
-          echo "Проверка SSH доступа к GitHub с сервера до добавления ключа..."
-          ssh -o StrictHostKeyChecking=no root@92.255.78.196 "ssh -T git@github.com" || echo "Не удалось подключиться к GitHub через SSH до добавления ключа."
-
-      # Шаг 7: Проверка существования директории проекта на сервере
-      - name: Check if project directory exists on server
-        run: |
-          echo "Проверка существования директории проекта на сервере..."
-          ssh -o StrictHostKeyChecking=no root@92.255.78.196 "if [ -d /home/root/project_root ]; then echo 'Directory exists'; else echo 'Directory does not exist'; fi"
-
-      # Шаг 8: Проверка, является ли директория Git-репозиторием
-      - name: Check if project directory is a Git repository
-        run: |
-          echo "Проверка, является ли директория Git-репозиторием..."
-          ssh -o StrictHostKeyChecking=no root@92.255.78.196 "if [ -d /home/root/project_root/.git ]; then echo 'Git repository exists'; else echo 'Not a Git repository'; fi"
-
-      # Шаг 9: Удаление существующей директории, если она не является Git-репозиторием
-      - name: Remove existing directory if not a Git repository
-        run: |
-          echo "Удаление директории, если она не является Git-репозиторием..."
-          ssh -o StrictHostKeyChecking=no root@92.255.78.196 "
-            if [ -d /home/root/project_root ] && [ ! -d /home/root/project_root/.git ]; then
-              echo 'Удаление непустой директории...'
-              rm -rf /home/root/project_root
-            fi
-          "
-
-      # Шаг 10: Добавление GitHub SSH ключа и настройка SSH-конфигурации на сервере
       - name: Add GitHub SSH key to server and configure SSH
         run: |
-          echo "Добавление GitHub SSH ключа и настройка SSH..."
           ssh -o StrictHostKeyChecking=no root@92.255.78.196 << EOF
-            mkdir -p ~/.ssh
-            echo "${{ secrets.GITHUB_SSH_KEY }}" > ~/.ssh/id_rsa_github
-            chmod 600 ~/.ssh/id_rsa_github
-            ssh-keyscan github.com >> ~/.ssh/known_hosts
-            cat << 'CONFIG_EOF' > ~/.ssh/config
+mkdir -p ~/.ssh
+echo "${{ secrets.GITHUB_SSH_KEY }}" > ~/.ssh/id_rsa_github
+chmod 600 ~/.ssh/id_rsa_github
+ssh-keyscan github.com >> ~/.ssh/known_hosts
+cat << 'CONFIG_EOF' > ~/.ssh/config
 Host github.com
   HostName github.com
   User git
   IdentityFile ~/.ssh/id_rsa_github
   IdentitiesOnly yes
 CONFIG_EOF
-            chmod 600 ~/.ssh/config
-            # Проверка наличия ключа и конфигурации
-            echo "Проверка наличия SSH ключа и конфигурации на сервере..."
-            ls -la ~/.ssh/id_rsa_github ~/.ssh/config
-            # Проверка подключения к GitHub
-            ssh -T git@github.com || echo "Проверка подключения к GitHub не удалась."
+chmod 600 ~/.ssh/config
+ls -la ~/.ssh/id_rsa_github ~/.ssh/config
+ssh -T git@github.com || echo "Проверка подключения к GitHub не удалась."
 EOF
 
-      # Шаг 11: Проверка SSH-доступа к GitHub после добавления ключа
       - name: Test GitHub SSH access after adding key
         run: |
-          echo "Проверка SSH доступа к GitHub с сервера после добавления ключа..."
           ssh -o StrictHostKeyChecking=no root@92.255.78.196 "ssh -T git@github.com" || { echo "Не удалось подключиться к GitHub через SSH после добавления ключа."; exit 1; }
 
-      # Шаг 12: Клонирование репозитория, если он ещё не клонирован
       - name: Clone repository if not exists
         run: |
-          echo "Клонирование репозитория, если необходимо..."
           ssh -o StrictHostKeyChecking=no root@92.255.78.196 "
             if [ ! -d /home/root/project_root/.git ]; then
-              echo 'Клонирование репозитория...'
               git clone git@github.com:Ali-Kizilbash/retreet_bot_narayana.git /home/root/project_root
-            else
-              echo 'Репозиторий уже клонирован.'
             fi
           "
 
-      # Шаг 13: Проверка содержимого директории проекта
       - name: List files in project directory on server
         run: |
-          echo "Список файлов в директории проекта на сервере:"
           ssh -o StrictHostKeyChecking=no root@92.255.78.196 "ls -la /home/root/project_root"
 
-      # Шаг 14: Выполнение git pull на сервере
       - name: Pull changes from GitHub on server
         run: |
-          echo "Выполнение git pull на сервере..."
           ssh -o StrictHostKeyChecking=no root@92.255.78.196 "cd /home/root/project_root && git pull origin new-feature"
 
-      # Шаг 15: Проверка состояния Docker на сервере
       - name: Check Docker status on server
         run: |
-          echo "Проверка состояния Docker на сервере..."
           ssh -o StrictHostKeyChecking=no root@92.255.78.196 "docker ps -a"
 
-      # Шаг 16: Перезапуск Docker контейнеров с Docker Compose
       - name: Restart Docker containers with Docker Compose
         run: |
-          echo "Перезапуск контейнеров с Docker Compose..."
           ssh -o StrictHostKeyChecking=no root@92.255.78.196 "
             cd /home/root/project_root &&
             docker-compose down &&
@@ -171,11 +116,7 @@ EOF
             docker-compose logs
           "
 
-      # Шаг 17: Дополнительная проверка деплоя (опционально)
       - name: Verify Deployment
         run: |
           echo "Проверка работы бота после деплоя..."
-          # Здесь вы можете добавить команды для проверки статуса бота, например:
-          # curl -f http://your-bot-domain/health || exit 1
-          # Или любые другие проверки, специфичные для вашего бота
-          echo "Проверка завершена." #
+          echo "Проверка завершена."
