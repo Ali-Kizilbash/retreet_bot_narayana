@@ -43,7 +43,7 @@ jobs:
       - name: Start SSH agent and add key
         uses: webfactory/ssh-agent@v0.5.3
         with:
-          ssh-private-key: ${{ secrets.SSH_KEY_DEPLOY }}  # Убедитесь, что секрет называется SSH_KEY
+          ssh-private-key: ${{ secrets.SSH_KEY }}  # Убедитесь, что секрет называется SSH_KEY
 
       # Проверка содержимого SSH-агента
       - name: List SSH identities
@@ -60,6 +60,11 @@ jobs:
             echo "Ошибка: SSH ключ не был добавлен."
             exit 1
           fi
+
+      # Отладочный шаг для SSH подключения
+      - name: Debug SSH connection
+        run: |
+          ssh -vvv -o StrictHostKeyChecking=no root@92.255.78.196 "echo 'Debug SSH connection'"
 
       # Проверка подключения к серверу
       - name: Test SSH connection to server
@@ -78,6 +83,19 @@ jobs:
         run: |
           echo "Проверка существования директории проекта на сервере..."
           ssh -o StrictHostKeyChecking=no root@92.255.78.196 "if [ -d /home/root/project_root ]; then echo 'Directory exists'; else echo 'Directory does not exist'; fi"
+
+      # Клонирование репозитория, если директория не является Git-репозиторием
+      - name: Clone repository if not exists
+        run: |
+          echo "Проверка и клонирование репозитория, если необходимо..."
+          ssh -o StrictHostKeyChecking=no root@92.255.78.196 "
+            if [ ! -d /home/root/project_root/.git ]; then
+              echo 'Клонирование репозитория...'
+              git clone git@github.com:Ali-Kizilbash/retreet_bot_narayana.git /home/root/project_root
+            else
+              echo 'Репозиторий уже клонирован.'
+            fi
+          "
 
       # Проверка содержимого директории проекта
       - name: List files in project directory on server
@@ -116,4 +134,3 @@ jobs:
           # curl -f http://your-bot-domain/health || exit 1
           # Или любые другие проверки, специфичные для вашего бота
           echo "Проверка завершена."
-
