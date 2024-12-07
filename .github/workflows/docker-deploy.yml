@@ -33,51 +33,87 @@ jobs:
   deploy:
     needs: build
     runs-on: ubuntu-latest
+    environment:
+      name: production  # Вы можете изменить на ваше окружение
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
 
-      - name: Start SSH agent
+      - name: Start SSH agent and add key
         uses: webfactory/ssh-agent@v0.5.3
         with:
-          ssh-private-key: ${{ secrets.SSH_KEY }}
+          ssh-private-key: ${{ secrets.SSH_KEY_DEPLOY }}  # Убедитесь, что секрет называется SSH_KEY
 
       # Проверка содержимого SSH-агента
       - name: List SSH identities
-        run: ssh-add -l
-
-      # Проверка доступа к серверу
-      - name: Test SSH connection
         run: |
+          echo "Список SSH идентификаторов в агенте:"
+          ssh-add -l
+
+      # Дополнительная проверка наличия ключа
+      - name: Verify SSH key is added
+        run: |
+          if ssh-add -l | grep -q "local_bot_key_ali"; then
+            echo "SSH ключ успешно добавлен."
+          else
+            echo "Ошибка: SSH ключ не был добавлен."
+            exit 1
+          fi
+
+      # Проверка подключения к серверу
+      - name: Test SSH connection to server
+        run: |
+          echo "Проверка SSH подключения к серверу..."
           ssh -o StrictHostKeyChecking=no root@92.255.78.196 "echo 'SSH connection works!'"
 
       # Проверка доступности GitHub из сервера
       - name: Test GitHub SSH access from server
         run: |
-          ssh -o StrictHostKeyChecking=no root@92.255.78.196 "ssh -T git@github.com"
+          echo "Проверка SSH доступа к GitHub с сервера..."
+          ssh -o StrictHostKeyChecking=no root@92.255.78.196 "ssh -T git@github.com" || echo "Не удалось подключиться к GitHub через SSH."
 
-      # Проверка существования директории
-      - name: Check project directory on server
+      # Проверка существования директории проекта
+      - name: Check if project directory exists on server
         run: |
+          echo "Проверка существования директории проекта на сервере..."
           ssh -o StrictHostKeyChecking=no root@92.255.78.196 "if [ -d /home/root/project_root ]; then echo 'Directory exists'; else echo 'Directory does not exist'; fi"
 
-      # Проверка содержимого директории
-      - name: List files in project directory
+      # Проверка содержимого директории проекта
+      - name: List files in project directory on server
         run: |
+          echo "Список файлов в директории проекта на сервере:"
           ssh -o StrictHostKeyChecking=no root@92.255.78.196 "ls -la /home/root/project_root"
 
       # Логгирование вывода команды `git pull`
-      - name: Pull changes from GitHub
+      - name: Pull changes from GitHub on server
         run: |
+          echo "Выполнение git pull на сервере..."
           ssh -o StrictHostKeyChecking=no root@92.255.78.196 "cd /home/root/project_root && git pull origin new-feature"
 
-      # Проверка текущего состояния Docker
-      - name: Check Docker status
+      # Проверка текущего состояния Docker на сервере
+      - name: Check Docker status on server
         run: |
+          echo "Проверка состояния Docker на сервере..."
           ssh -o StrictHostKeyChecking=no root@92.255.78.196 "docker ps -a"
 
-      # Перезапуск контейнеров с логами
-      - name: Restart containers with Docker Compose
+      # Перезапуск контейнеров с Docker Compose и вывод логов
+      - name: Restart Docker containers with Docker Compose
         run: |
-          ssh -o StrictHostKeyChecking=no root@92.255.78.196 "cd /home/root/project_root && docker-compose down && docker-compose up -d && docker-compose logs"
+          echo "Перезапуск контейнеров с Docker Compose..."
+          ssh -o StrictHostKeyChecking=no root@92.255.78.196 "
+            cd /home/root/project_root &&
+            docker-compose down &&
+            docker-compose up -d &&
+            docker-compose logs
+          "
+
+      # Дополнительные отладочные шаги (опционально)
+      - name: Verify Deployment
+        run: |
+          echo "Проверка работы бота после деплоя..."
+          # Здесь вы можете добавить команды для проверки статуса бота, например:
+          # curl -f http://your-bot-domain/health || exit 1
+          # Или любые другие проверки, специфичные для вашего бота
+          echo "Проверка завершена."
 
