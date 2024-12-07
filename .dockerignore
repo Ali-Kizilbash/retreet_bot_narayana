@@ -4,6 +4,4 @@ __pycache__
 *.pyd
 .git
 .venv
-env/
-*.env
 venv/
